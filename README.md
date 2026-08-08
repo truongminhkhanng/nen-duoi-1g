@@ -35,6 +35,22 @@ Tải bản mới nhất tại [GitHub Releases](https://github.com/truongminhkh
 Ứng dụng chưa được ký chứng thư thương mại, vì vậy Windows SmartScreen hoặc macOS Gatekeeper có thể
 hiển thị cảnh báo ở lần mở đầu tiên. Chỉ tải file từ trang Releases chính thức của repository này.
 
+## Trường hợp sử dụng
+
+- **Gửi cả thư mục qua Zalo:** đặt giới hạn khoảng `950 MB` để tạo nhiều ZIP độc lập dưới 1 GB,
+  sau đó gửi lần lượt từng file. Người nhận có thể mở riêng từng ZIP, không cần tải đủ tất cả phần.
+- **Gửi tài liệu qua email:** đặt giới hạn theo dung lượng tệp đính kèm của nhà cung cấp, chẳng hạn
+  `20 MB` hoặc `25 MB`.
+- **Tải lên cloud theo từng phần:** chia bộ ảnh, video, tài liệu hoặc source code thành các ZIP nhỏ
+  để tải lại riêng phần bị lỗi thay vì tải lại toàn bộ.
+- **Chép sang USB/FAT32:** đặt giới hạn dưới `4 GB` để tránh giới hạn kích thước một file của FAT32.
+- **Bàn giao dữ liệu theo đợt:** mỗi ZIP độc lập, có SHA-256 và báo cáo `zip_report.json`, phù hợp
+  khi cần kiểm tra file nào đã giao hoặc bị lỗi.
+- **Lưu trữ và sao lưu:** gom nhiều file nhỏ thành các gói có kích thước đều, dễ sao chép, đánh số
+  và lưu trên nhiều thiết bị.
+- **Xử lý file đơn quá lớn:** bỏ qua, thử nén riêng hoặc chia file thành `.001`, `.002`… rồi ghép lại
+  bằng công cụ có sẵn trong ứng dụng.
+
 ## Chạy từ source
 
 Yêu cầu Python 3.11+:
