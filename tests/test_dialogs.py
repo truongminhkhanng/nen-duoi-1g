@@ -1,4 +1,4 @@
-from app.ui.dialogs import USE_CASES_TEXT
+from app.use_cases import USE_CASES_TEXT
 
 
 def test_use_cases_explain_independent_zips_and_single_file_limit() -> None:
