@@ -26,6 +26,12 @@ class ConflictAction(str, Enum):
     CLEAN = "clean"
 
 
+class CompressionEngine(str, Enum):
+    AUTO = "auto"
+    SEVEN_ZIP = "7zip"
+    PYTHON = "python"
+
+
 @dataclass(slots=True)
 class FileEntry:
     path: Path
@@ -70,3 +76,5 @@ class CompressionOptions:
     keep_structure: bool = True
     conflict_action: ConflictAction = ConflictAction.RENAME
     oversize_action: OversizeAction = OversizeAction.SKIP
+    engine: CompressionEngine = CompressionEngine.AUTO
+    engine_executable: str | None = None

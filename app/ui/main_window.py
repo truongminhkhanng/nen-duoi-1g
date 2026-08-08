@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog
                                QVBoxLayout, QWidget)
 
 from app.core.models import CompressionOptions, ConflictAction, OversizeAction, ScanResult
+from app.core.engines import resolve_engine
+from app.core.models import CompressionEngine
 from app.core.planner import plan_archives
 from app.ui.dialogs import JoinDialog, choose_conflict_action, choose_oversize_action
 from app.ui.styles import LIGHT_STYLE
@@ -20,6 +22,7 @@ from app.utils.paths import open_folder, validate_prefix
 from app.utils.sizes import format_size, parse_size
 from app.workers.compress_worker import CompressWorker
 from app.workers.scan_worker import ScanWorker
+from app.version import __version__
 
 
 class MainWindow(QMainWindow):
@@ -36,6 +39,7 @@ class MainWindow(QMainWindow):
         self.thread: QThread | None = None
         self.worker: ScanWorker | CompressWorker | None = None
         self.paused = False
+        self.active_engine = CompressionEngine.PYTHON
         self._build_ui()
         self._restore_settings()
         self.setStyleSheet(LIGHT_STYLE)
@@ -78,6 +82,9 @@ class MainWindow(QMainWindow):
         join_button.clicked.connect(lambda: JoinDialog(self).exec())
         sidebar_layout.addWidget(open_button)
         sidebar_layout.addWidget(join_button)
+        version_label = QLabel(f"Phiên bản {__version__}")
+        version_label.setObjectName("versionLabel")
+        sidebar_layout.addWidget(version_label)
         root.addWidget(sidebar)
 
         content = QWidget()
@@ -137,6 +144,12 @@ class MainWindow(QMainWindow):
         self.level_combo = QComboBox()
         self.level_combo.addItems(["Không nén", "Nhanh", "Cân bằng", "Tối đa"])
         self.level_combo.setCurrentIndex(2)
+        self.engine_combo = QComboBox()
+        self.engine_combo.addItem("Tự động (khuyên dùng)", CompressionEngine.AUTO)
+        self.engine_combo.addItem("7-Zip", CompressionEngine.SEVEN_ZIP)
+        self.engine_combo.addItem("Python tích hợp", CompressionEngine.PYTHON)
+        self.engine_status = QLabel()
+        self.engine_status.setObjectName("engineStatus")
         self.prefix_edit = QLineEdit("part")
         option_grid.addWidget(QLabel("Giới hạn"), 0, 0)
         option_grid.addWidget(self.limit_spin, 0, 1)
@@ -159,6 +172,14 @@ class MainWindow(QMainWindow):
             checks.addWidget(checkbox)
         checks.addStretch()
         option_grid.addLayout(checks, 1, 0, 1, 7)
+        engine_row = QHBoxLayout()
+        engine_row.addWidget(QLabel("Công cụ nén"))
+        engine_row.addWidget(self.engine_combo)
+        engine_row.addWidget(self.engine_status)
+        engine_row.addStretch()
+        option_grid.addLayout(engine_row, 2, 0, 1, 7)
+        self.engine_combo.currentIndexChanged.connect(self._refresh_engine_status)
+        self.structure_check.toggled.connect(self._refresh_engine_status)
         content_layout.addWidget(options)
 
         stats = QHBoxLayout()
@@ -312,6 +333,17 @@ class MainWindow(QMainWindow):
         return [(ZIP_STORED, None), (ZIP_DEFLATED, 1), (ZIP_DEFLATED, 6),
                 (ZIP_DEFLATED, 9)][self.level_combo.currentIndex()]
 
+    def _selected_engine(self) -> CompressionEngine:
+        return self.engine_combo.currentData()
+
+    def _engine_info(self):
+        return resolve_engine(self._selected_engine(), self.structure_check.isChecked())
+
+    def _refresh_engine_status(self) -> None:
+        info = self._engine_info()
+        detail = f" — {info.fallback_reason}" if info.fallback_reason else ""
+        self.engine_status.setText(f"Đang dùng: {info.label}{detail}")
+
     def compress(self) -> None:
         try:
             source, output = self._paths()
@@ -332,8 +364,14 @@ class MainWindow(QMainWindow):
         if conflict is None:
             return
         compression, level = self._compression_settings()
+        engine = self._engine_info()
+        self.active_engine = engine.engine
+        self.log.appendPlainText(f"Công cụ nén: {engine.label}")
+        if engine.fallback_reason:
+            self.log.appendPlainText(f"Lưu ý: {engine.fallback_reason}")
         options = CompressionOptions(source, output, limit, prefix, compression, level,
-                                     self.structure_check.isChecked(), conflict, oversize_action)
+                                     self.structure_check.isChecked(), conflict, oversize_action,
+                                     engine.engine, engine.executable)
         self._save_settings()
         self._set_busy(True, scanning=False)
         worker = CompressWorker(options, self.groups, self.oversized, self.scan_result.errors)
@@ -378,7 +416,9 @@ class MainWindow(QMainWindow):
     def _set_busy(self, busy: bool, scanning: bool = False) -> None:
         self.scan_button.setEnabled(not busy)
         self.start_button.setEnabled(not busy and bool(self.scan_result.files))
-        self.pause_button.setEnabled(busy and not scanning)
+        can_pause = self.active_engine == CompressionEngine.PYTHON
+        self.pause_button.setEnabled(busy and not scanning and can_pause)
+        self.pause_button.setToolTip("" if can_pause else "7-Zip không hỗ trợ tạm dừng an toàn")
         self.cancel_button.setEnabled(busy)
 
     def _toggle_pause(self) -> None:
@@ -409,16 +449,21 @@ class MainWindow(QMainWindow):
         self.limit_spin.setValue(self.settings.value("limit", 950.0, float))
         self.unit_combo.setCurrentText(self.settings.value("unit", "MB", str))
         self.level_combo.setCurrentIndex(self.settings.value("level", 2, int))
+        saved_engine = self.settings.value("engine", CompressionEngine.AUTO.value, str)
+        engine_index = self.engine_combo.findData(CompressionEngine(saved_engine))
+        self.engine_combo.setCurrentIndex(max(engine_index, 0))
         self.prefix_edit.setText(self.settings.value("prefix", "part", str))
         for key, widget in (("recursive", self.recursive_check), ("structure", self.structure_check),
                             ("hidden", self.hidden_check), ("system", self.system_check),
                             ("open", self.open_check)):
             widget.setChecked(self.settings.value(key, True, bool))
+        self._refresh_engine_status()
 
     def _save_settings(self) -> None:
         for key, value in (("source", self.source_edit.text()), ("output", self.output_edit.text()),
                            ("limit", self.limit_spin.value()), ("unit", self.unit_combo.currentText()),
                            ("level", self.level_combo.currentIndex()), ("prefix", self.prefix_edit.text()),
+                           ("engine", self._selected_engine().value),
                            ("recursive", self.recursive_check.isChecked()),
                            ("structure", self.structure_check.isChecked()),
                            ("hidden", self.hidden_check.isChecked()),

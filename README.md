@@ -1,5 +1,7 @@
 # Zip Part Maker
 
+Phiên bản hiện tại: **0.0.0**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 
 ## Tính năng chính
@@ -7,6 +9,7 @@
 - Quét đệ quy ở background, không đi theo symlink và tự loại thư mục đầu ra.
 - Bỏ qua `.DS_Store`, `Thumbs.db`, `desktop.ini`, `__MACOSX`, file ẩn/hệ thống tùy chọn.
 - ZIP_STORED hoặc ZIP_DEFLATED mức nhanh/cân bằng/tối đa.
+- Windows và Linux tự động ưu tiên 7-Zip để tạo ZIP; macOS giữ engine Python tích hợp.
 - Ghi `.zip.tmp`, kiểm tra `testzip()`, SHA-256 và dung lượng trước khi đổi tên.
 - Bỏ qua, nén thử riêng hoặc chia file quá lớn thành `.001`… kèm manifest/checksum; có công cụ ghép lại.
 - Xử lý xung đột bằng ghi đè, tên mới, hoặc xóa ZIP do ứng dụng đặt theo prefix sau khi xác nhận.
@@ -23,6 +26,9 @@ python -m venv .venv
 python -m pip install -e .
 python main.py
 ```
+
+Để dùng engine 7-Zip, cài `7z.exe` trên Windows hoặc `7zz`/`7z` trên Linux và bảo đảm
+chương trình nằm trong `PATH`. Nếu không tìm thấy, ứng dụng tự dùng engine Python tích hợp.
 
 Chạy test:
 

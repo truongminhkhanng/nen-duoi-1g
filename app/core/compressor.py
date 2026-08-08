@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import threading
 import time
 from datetime import datetime, timezone
@@ -9,7 +10,8 @@ from typing import Callable
 from zipfile import ZipFile
 
 from app.core.models import (ArchiveGroup, ArchiveResult, CompressionOptions,
-                             ConflictAction, FileEntry, FileStatus, OversizeAction)
+                             CompressionEngine, ConflictAction, FileEntry,
+                             FileStatus, OversizeAction)
 from app.core.splitter import split_file
 from app.core.verifier import verify_zip
 from app.utils.paths import safe_archive_name, unique_path, validate_prefix
@@ -87,22 +89,27 @@ class Compressor:
         current_total = max(group.estimated_size, 1)
         current_done = 0
         try:
-            kwargs: dict[str, object] = {"mode": "x", "compression": self.options.compression,
-                                         "allowZip64": True}
-            if self.options.compresslevel is not None:
-                kwargs["compresslevel"] = self.options.compresslevel
-            with ZipFile(temporary, **kwargs) as archive:
-                for entry in group.files:
-                    self.controller.checkpoint()
-                    entry.status = FileStatus.PROCESSING
-                    arcname = self._arcname(entry, used)
-                    self.on_progress(completed_before + current_done, total_bytes,
-                                     entry.relative_path.as_posix(), target.name,
-                                     int(current_done * 100 / current_total))
-                    archive.write(entry.path, arcname)
-                    archived.append(arcname)
-                    current_done += entry.size
-                    entry.status = FileStatus.DONE
+            if self.options.engine == CompressionEngine.SEVEN_ZIP:
+                archived = self._create_with_7zip(group, temporary, target,
+                                                   completed_before, total_bytes)
+            else:
+                kwargs: dict[str, object] = {
+                    "mode": "x", "compression": self.options.compression, "allowZip64": True
+                }
+                if self.options.compresslevel is not None:
+                    kwargs["compresslevel"] = self.options.compresslevel
+                with ZipFile(temporary, **kwargs) as archive:
+                    for entry in group.files:
+                        self.controller.checkpoint()
+                        entry.status = FileStatus.PROCESSING
+                        arcname = self._arcname(entry, used)
+                        self.on_progress(completed_before + current_done, total_bytes,
+                                         entry.relative_path.as_posix(), target.name,
+                                         int(current_done * 100 / current_total))
+                        archive.write(entry.path, arcname)
+                        archived.append(arcname)
+                        current_done += entry.size
+                        entry.status = FileStatus.DONE
             self.controller.checkpoint()
             size, digest = verify_zip(temporary)
             if size >= self.options.limit_bytes:
@@ -117,6 +124,43 @@ class Compressor:
                 if entry.status == FileStatus.PROCESSING:
                     entry.status = FileStatus.ERROR
             raise
+
+    def _create_with_7zip(self, group: ArchiveGroup, temporary: Path, target: Path,
+                          completed_before: int, total_bytes: int) -> list[str]:
+        executable = self.options.engine_executable
+        if not executable:
+            raise OSError("Không tìm thấy chương trình 7-Zip")
+        names = [safe_archive_name(entry.relative_path) for entry in group.files]
+        if any("\n" in name or "\r" in name for name in names):
+            raise ValueError("7-Zip không hỗ trợ tên file chứa ký tự xuống dòng")
+        list_path = temporary.with_suffix(temporary.suffix + ".files.txt")
+        list_path.write_text("\n".join(names), encoding="utf-8")
+        level = 0 if self.options.compresslevel is None else self.options.compresslevel
+        command = [executable, "a", "-tzip", f"-mx={level}", "-y", "-bd", "-bb0",
+                   "-scsUTF-8", str(temporary), f"@{list_path}"]
+        for entry in group.files:
+            entry.status = FileStatus.PROCESSING
+        self.on_progress(completed_before, total_bytes, group.files[0].relative_path.as_posix(),
+                         target.name, 0)
+        try:
+            process = subprocess.Popen(command, cwd=self.options.source, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                                       errors="replace")
+            while process.poll() is None:
+                if self.controller.cancelled():
+                    process.terminate()
+                    process.wait()
+                    raise InterruptedError("Đã hủy")
+                time.sleep(0.1)
+            output = process.communicate()[0]
+            if process.returncode != 0:
+                detail = output.strip().splitlines()[-1] if output.strip() else "không rõ lỗi"
+                raise OSError(f"7-Zip thất bại (mã {process.returncode}): {detail}")
+            for entry in group.files:
+                entry.status = FileStatus.DONE
+            return names
+        finally:
+            list_path.unlink(missing_ok=True)
 
     def run(self, groups: list[ArchiveGroup], oversized: list[FileEntry],
             scan_errors: list[str] | None = None) -> dict[str, object]:
@@ -185,6 +229,7 @@ class Compressor:
             "started_at": started.isoformat(), "finished_at": finished.isoformat(),
             "source": str(self.options.source), "output": str(self.options.output),
             "limit_bytes": self.options.limit_bytes,
+            "compression_engine": self.options.engine.value,
             "total_files": sum(len(group.files) for group in groups) + len(oversized),
             "total_size": sum(group.estimated_size for group in groups) + sum(x.size for x in oversized),
             "archives": [{"name": x.path.name, "size": x.size, "sha256": x.sha256,

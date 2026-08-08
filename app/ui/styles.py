@@ -4,6 +4,7 @@ QMainWindow, QWidget#content { background: #f5f7fb; }
 QFrame#sidebar { background: #17243b; border: 0; }
 QLabel#brand { color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: 2px; }
 QLabel#tagline { color: #93a4bd; font-size: 12px; }
+QLabel#versionLabel { color: #71839d; font-size: 11px; padding: 4px; }
 QLabel#navTitle { color: #71839d; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
 QLabel#navItem, QLabel#navActive { padding: 11px 12px; border-radius: 7px; }
 QLabel#navItem { color: #aab7ca; }
@@ -32,6 +33,7 @@ QFrame#statCard, QFrame#panel { background: #ffffff; border: 1px solid #e1e7ef;
                                border-radius: 10px; }
 QLabel#statValue { color: #17243b; font-size: 17px; font-weight: 700; }
 QLabel#panelTitle { color: #26364d; font-size: 14px; font-weight: 700; }
+QLabel#engineStatus { color: #60728a; font-size: 12px; }
 QTableWidget#fileTable { border-radius: 10px; gridline-color: #edf1f6;
                          alternate-background-color: #f8fafd; }
 QHeaderView::section { color: #526279; background: #eef3f8; border: 0;
