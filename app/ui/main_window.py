@@ -16,7 +16,8 @@ from app.core.models import CompressionOptions, ConflictAction, OversizeAction, 
 from app.core.engines import resolve_engine
 from app.core.models import CompressionEngine
 from app.core.planner import plan_archives
-from app.ui.dialogs import JoinDialog, choose_conflict_action, choose_oversize_action
+from app.ui.dialogs import (JoinDialog, choose_conflict_action, choose_oversize_action,
+                            show_use_cases)
 from app.ui.styles import LIGHT_STYLE
 from app.utils.paths import open_folder, validate_prefix
 from app.utils.sizes import format_size, parse_size
@@ -60,7 +61,7 @@ class MainWindow(QMainWindow):
         brand = QLabel("ZIP\nPART MAKER")
         brand.setObjectName("brand")
         sidebar_layout.addWidget(brand)
-        tagline = QLabel("Đóng gói thông minh\nChia sẻ dễ dàng")
+        tagline = QLabel("Chia thư mục lớn\nThành ZIP độc lập")
         tagline.setObjectName("tagline")
         sidebar_layout.addWidget(tagline)
         sidebar_layout.addSpacing(28)
@@ -78,8 +79,12 @@ class MainWindow(QMainWindow):
         open_button.setObjectName("sidebarButton")
         join_button = QPushButton("Ghép file đã chia…")
         join_button.setObjectName("sidebarButton")
+        help_button = QPushButton("Trường hợp sử dụng")
+        help_button.setObjectName("sidebarButton")
         open_button.clicked.connect(self._open_output)
         join_button.clicked.connect(lambda: JoinDialog(self).exec())
+        help_button.clicked.connect(lambda: show_use_cases(self))
+        sidebar_layout.addWidget(help_button)
         sidebar_layout.addWidget(open_button)
         sidebar_layout.addWidget(join_button)
         version_label = QLabel(f"Phiên bản {__version__}")
@@ -98,7 +103,7 @@ class MainWindow(QMainWindow):
         heading = QVBoxLayout()
         title = QLabel("Dashboard")
         title.setObjectName("pageTitle")
-        subtitle = QLabel("Tạo các gói ZIP độc lập theo đúng dung lượng bạn cần")
+        subtitle = QLabel("Chia thư mục nhiều file thành các ZIP độc lập theo đúng dung lượng")
         subtitle.setObjectName("pageSubtitle")
         heading.addWidget(title)
         heading.addWidget(subtitle)

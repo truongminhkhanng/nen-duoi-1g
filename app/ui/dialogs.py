@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
                                QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout)
 
@@ -9,13 +10,36 @@ from app.core.models import ConflictAction, OversizeAction
 from app.core.splitter import join_file
 
 
+USE_CASES_TEXT = """<b>Zip Part Maker phù hợp khi nào?</b><br><br>
+• <b>Gửi thư mục qua Zalo:</b> một thư mục nhiều ảnh, tài liệu hoặc file nhỏ khi nén chung vượt
+1 GB. App phân phối chúng thành nhiều ZIP độc lập khoảng 950 MB để gửi lần lượt.<br><br>
+• <b>Email và cloud:</b> đặt giới hạn 20–25 MB cho email hoặc chia nhỏ để tải lại riêng phần bị lỗi.<br><br>
+• <b>USB FAT32:</b> đặt giới hạn dưới 4 GB để tránh giới hạn kích thước một file.<br><br>
+• <b>Bàn giao và sao lưu:</b> các ZIP được đánh số, kiểm tra SHA-256 và có báo cáo JSON.<br><br>
+<b>Điểm quan trọng:</b> mỗi ZIP là độc lập; người nhận mở từng ZIP bình thường, không phải ghép lại.
+App không thể biến một file đơn như video 2 GB thành ZIP độc lập dưới 1 GB nếu bản thân file đó
+không nén đủ nhỏ. Chế độ chia .001 chỉ là phương án phụ và người nhận phải ghép đủ các phần."""
+
+
+def show_use_cases(parent: object) -> None:
+    box = QMessageBox(parent)  # type: ignore[arg-type]
+    box.setWindowTitle("Trường hợp sử dụng")
+    box.setIcon(QMessageBox.Icon.Information)
+    box.setTextFormat(Qt.TextFormat.RichText)
+    box.setText(USE_CASES_TEXT)
+    box.setStandardButtons(QMessageBox.StandardButton.Ok)
+    box.exec()
+
+
 def choose_oversize_action(parent: object, count: int) -> OversizeAction | None:
     box = QMessageBox(parent)  # type: ignore[arg-type]
     box.setWindowTitle("File quá lớn")
-    box.setText(f"Phát hiện {count} file lớn hơn dung lượng an toàn. Chọn cách xử lý:")
+    box.setText(f"Phát hiện {count} file mà riêng từng file đã lớn hơn giới hạn ZIP.\n\n"
+                "App được thiết kế để phân phối nhiều file vào các ZIP độc lập; một file đơn quá "
+                "lớn không thể bảo đảm nằm trong ZIP dưới giới hạn. Chọn cách xử lý:")
     skip = box.addButton("Bỏ qua", QMessageBox.ButtonRole.AcceptRole)
     attempt = box.addButton("Nén thử riêng", QMessageBox.ButtonRole.ActionRole)
-    split = box.addButton("Chia .001, .002…", QMessageBox.ButtonRole.ActionRole)
+    split = box.addButton("Chia file (phải ghép lại)", QMessageBox.ButtonRole.ActionRole)
     box.addButton(QMessageBox.StandardButton.Cancel)
     box.exec()
     return {skip: OversizeAction.SKIP, attempt: OversizeAction.TRY_COMPRESS,
