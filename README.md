@@ -7,7 +7,7 @@
 [![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Phiên bản hiện tại: **0.0.2**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+Phiên bản hiện tại: **0.0.3**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
 
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 
@@ -48,8 +48,13 @@ hiển thị cảnh báo ở lần mở đầu tiên. Chỉ tải file từ tran
   khi cần kiểm tra file nào đã giao hoặc bị lỗi.
 - **Lưu trữ và sao lưu:** gom nhiều file nhỏ thành các gói có kích thước đều, dễ sao chép, đánh số
   và lưu trên nhiều thiết bị.
-- **Xử lý file đơn quá lớn:** bỏ qua, thử nén riêng hoặc chia file thành `.001`, `.002`… rồi ghép lại
-  bằng công cụ có sẵn trong ứng dụng.
+
+### App không dùng để làm gì?
+
+Nếu chỉ có một file đơn như video `2.5 GB`, ứng dụng không thể bảo đảm biến nó thành một ZIP độc lập
+dưới 1 GB nếu dữ liệu không nén đủ nhỏ. Chế độ chia `.001`, `.002` là phương án phụ để truyền file;
+người nhận phải tải đủ và ghép lại trước khi sử dụng. Mục tiêu chính của app là **phân phối nhiều file
+trong một thư mục vào nhiều ZIP độc lập**, không phải cắt video hoặc chia một file lớn.
 
 ## Chạy từ source
 

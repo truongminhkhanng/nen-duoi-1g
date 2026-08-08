@@ -2,20 +2,34 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
                                QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout)
 
 from app.core.models import ConflictAction, OversizeAction
 from app.core.splitter import join_file
+from app.use_cases import USE_CASES_TEXT
+
+
+def show_use_cases(parent: object) -> None:
+    box = QMessageBox(parent)  # type: ignore[arg-type]
+    box.setWindowTitle("Trường hợp sử dụng")
+    box.setIcon(QMessageBox.Icon.Information)
+    box.setTextFormat(Qt.TextFormat.RichText)
+    box.setText(USE_CASES_TEXT)
+    box.setStandardButtons(QMessageBox.StandardButton.Ok)
+    box.exec()
 
 
 def choose_oversize_action(parent: object, count: int) -> OversizeAction | None:
     box = QMessageBox(parent)  # type: ignore[arg-type]
     box.setWindowTitle("File quá lớn")
-    box.setText(f"Phát hiện {count} file lớn hơn dung lượng an toàn. Chọn cách xử lý:")
+    box.setText(f"Phát hiện {count} file mà riêng từng file đã lớn hơn giới hạn ZIP.\n\n"
+                "App được thiết kế để phân phối nhiều file vào các ZIP độc lập; một file đơn quá "
+                "lớn không thể bảo đảm nằm trong ZIP dưới giới hạn. Chọn cách xử lý:")
     skip = box.addButton("Bỏ qua", QMessageBox.ButtonRole.AcceptRole)
     attempt = box.addButton("Nén thử riêng", QMessageBox.ButtonRole.ActionRole)
-    split = box.addButton("Chia .001, .002…", QMessageBox.ButtonRole.ActionRole)
+    split = box.addButton("Chia file (phải ghép lại)", QMessageBox.ButtonRole.ActionRole)
     box.addButton(QMessageBox.StandardButton.Cancel)
     box.exec()
     return {skip: OversizeAction.SKIP, attempt: OversizeAction.TRY_COMPRESS,

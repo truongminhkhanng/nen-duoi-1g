@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.3 - 2026-08-08
+
+- Thêm mục Trường hợp sử dụng ngay trong ứng dụng.
+- Làm rõ mục tiêu chia thư mục nhiều file thành các ZIP độc lập để gửi qua Zalo/email/cloud.
+- Cảnh báo rõ file đơn vượt giới hạn không thể trở thành ZIP độc lập nếu không nén đủ nhỏ.
+- Đổi nhãn chia `.001` để người dùng biết các phần phải được ghép lại.
+
 ## 0.0.2 - 2026-08-08
 
 - Cho phép chọn Tự động, WinRAR, 7-Zip hoặc Python làm engine nén.
