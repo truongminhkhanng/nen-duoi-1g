@@ -2,23 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
                                QLabel, QLineEdit, QMessageBox, QPushButton, QVBoxLayout)
 
 from app.core.models import ConflictAction, OversizeAction
 from app.core.splitter import join_file
-from app.use_cases import USE_CASES_TEXT
-
-
-def show_use_cases(parent: object) -> None:
-    box = QMessageBox(parent)  # type: ignore[arg-type]
-    box.setWindowTitle("Trường hợp sử dụng")
-    box.setIcon(QMessageBox.Icon.Information)
-    box.setTextFormat(Qt.TextFormat.RichText)
-    box.setText(USE_CASES_TEXT)
-    box.setStandardButtons(QMessageBox.StandardButton.Ok)
-    box.exec()
 
 
 def choose_oversize_action(parent: object, count: int) -> OversizeAction | None:

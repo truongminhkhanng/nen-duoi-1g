@@ -16,8 +16,7 @@ from app.core.models import CompressionOptions, ConflictAction, OversizeAction, 
 from app.core.engines import resolve_engine
 from app.core.models import CompressionEngine
 from app.core.planner import plan_archives
-from app.ui.dialogs import (JoinDialog, choose_conflict_action, choose_oversize_action,
-                            show_use_cases)
+from app.ui.dialogs import JoinDialog, choose_conflict_action, choose_oversize_action
 from app.ui.styles import LIGHT_STYLE
 from app.utils.paths import open_folder, validate_prefix
 from app.utils.sizes import format_size, parse_size
@@ -79,12 +78,8 @@ class MainWindow(QMainWindow):
         open_button.setObjectName("sidebarButton")
         join_button = QPushButton("Ghép file đã chia…")
         join_button.setObjectName("sidebarButton")
-        help_button = QPushButton("Trường hợp sử dụng")
-        help_button.setObjectName("sidebarButton")
         open_button.clicked.connect(self._open_output)
         join_button.clicked.connect(lambda: JoinDialog(self).exec())
-        help_button.clicked.connect(lambda: show_use_cases(self))
-        sidebar_layout.addWidget(help_button)
         sidebar_layout.addWidget(open_button)
         sidebar_layout.addWidget(join_button)
         version_label = QLabel(f"Phiên bản {__version__}")

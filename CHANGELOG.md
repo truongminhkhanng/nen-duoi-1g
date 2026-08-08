@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.4 - 2026-08-08
+
+- Xóa nút và hộp thoại Trường hợp sử dụng khỏi giao diện theo phản hồi người dùng.
+- Giữ nguyên toàn bộ logic chia thư mục thành ZIP độc lập và các engine nén.
+
 ## 0.0.3 - 2026-08-08
 
 - Thêm mục Trường hợp sử dụng ngay trong ứng dụng.
