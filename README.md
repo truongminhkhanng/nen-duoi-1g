@@ -7,7 +7,7 @@
 [![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Phiên bản hiện tại: **0.0.1**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+Phiên bản hiện tại: **0.0.2**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
 
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 
@@ -16,7 +16,7 @@ Phiên bản hiện tại: **0.0.1**. Xem lịch sử thay đổi tại [CHANGEL
 - Quét đệ quy ở background, không đi theo symlink và tự loại thư mục đầu ra.
 - Bỏ qua `.DS_Store`, `Thumbs.db`, `desktop.ini`, `__MACOSX`, file ẩn/hệ thống tùy chọn.
 - ZIP_STORED hoặc ZIP_DEFLATED mức nhanh/cân bằng/tối đa.
-- Windows và Linux tự động ưu tiên 7-Zip để tạo ZIP; macOS giữ engine Python tích hợp.
+- Cho phép chọn Tự động, WinRAR, 7-Zip hoặc Python; macOS giữ engine Python tích hợp.
 - Ghi `.zip.tmp`, kiểm tra `testzip()`, SHA-256 và dung lượng trước khi đổi tên.
 - Bỏ qua, nén thử riêng hoặc chia file quá lớn thành `.001`… kèm manifest/checksum; có công cụ ghép lại.
 - Xử lý xung đột bằng ghi đè, tên mới, hoặc xóa ZIP do ứng dụng đặt theo prefix sau khi xác nhận.
@@ -35,6 +35,22 @@ Tải bản mới nhất tại [GitHub Releases](https://github.com/truongminhkh
 Ứng dụng chưa được ký chứng thư thương mại, vì vậy Windows SmartScreen hoặc macOS Gatekeeper có thể
 hiển thị cảnh báo ở lần mở đầu tiên. Chỉ tải file từ trang Releases chính thức của repository này.
 
+## Trường hợp sử dụng
+
+- **Gửi cả thư mục qua Zalo:** đặt giới hạn khoảng `950 MB` để tạo nhiều ZIP độc lập dưới 1 GB,
+  sau đó gửi lần lượt từng file. Người nhận có thể mở riêng từng ZIP, không cần tải đủ tất cả phần.
+- **Gửi tài liệu qua email:** đặt giới hạn theo dung lượng tệp đính kèm của nhà cung cấp, chẳng hạn
+  `20 MB` hoặc `25 MB`.
+- **Tải lên cloud theo từng phần:** chia bộ ảnh, video, tài liệu hoặc source code thành các ZIP nhỏ
+  để tải lại riêng phần bị lỗi thay vì tải lại toàn bộ.
+- **Chép sang USB/FAT32:** đặt giới hạn dưới `4 GB` để tránh giới hạn kích thước một file của FAT32.
+- **Bàn giao dữ liệu theo đợt:** mỗi ZIP độc lập, có SHA-256 và báo cáo `zip_report.json`, phù hợp
+  khi cần kiểm tra file nào đã giao hoặc bị lỗi.
+- **Lưu trữ và sao lưu:** gom nhiều file nhỏ thành các gói có kích thước đều, dễ sao chép, đánh số
+  và lưu trên nhiều thiết bị.
+- **Xử lý file đơn quá lớn:** bỏ qua, thử nén riêng hoặc chia file thành `.001`, `.002`… rồi ghép lại
+  bằng công cụ có sẵn trong ứng dụng.
+
 ## Chạy từ source
 
 Yêu cầu Python 3.11+:
@@ -49,6 +65,8 @@ python main.py
 
 Để dùng engine 7-Zip, cài `7z.exe` trên Windows hoặc `7zz`/`7z` trên Linux và bảo đảm
 chương trình nằm trong `PATH`. Nếu không tìm thấy, ứng dụng tự dùng engine Python tích hợp.
+WinRAR chỉ được hỗ trợ trên Windows và cần cài `WinRAR.exe`; ứng dụng chỉ yêu cầu WinRAR tạo
+file ZIP, không tạo file RAR.
 
 Chạy test:
 

@@ -89,9 +89,9 @@ class Compressor:
         current_total = max(group.estimated_size, 1)
         current_done = 0
         try:
-            if self.options.engine == CompressionEngine.SEVEN_ZIP:
-                archived = self._create_with_7zip(group, temporary, target,
-                                                   completed_before, total_bytes)
+            if self.options.engine in (CompressionEngine.SEVEN_ZIP, CompressionEngine.WINRAR):
+                archived = self._create_with_external_engine(group, temporary, target,
+                                                              completed_before, total_bytes)
             else:
                 kwargs: dict[str, object] = {
                     "mode": "x", "compression": self.options.compression, "allowZip64": True
@@ -125,8 +125,8 @@ class Compressor:
                     entry.status = FileStatus.ERROR
             raise
 
-    def _create_with_7zip(self, group: ArchiveGroup, temporary: Path, target: Path,
-                          completed_before: int, total_bytes: int) -> list[str]:
+    def _create_with_external_engine(self, group: ArchiveGroup, temporary: Path, target: Path,
+                                     completed_before: int, total_bytes: int) -> list[str]:
         executable = self.options.engine_executable
         if not executable:
             raise OSError("Không tìm thấy chương trình 7-Zip")
@@ -134,10 +134,16 @@ class Compressor:
         if any("\n" in name or "\r" in name for name in names):
             raise ValueError("7-Zip không hỗ trợ tên file chứa ký tự xuống dòng")
         list_path = temporary.with_suffix(temporary.suffix + ".files.txt")
-        list_path.write_text("\n".join(names), encoding="utf-8")
         level = 0 if self.options.compresslevel is None else self.options.compresslevel
-        command = [executable, "a", "-tzip", f"-mx={level}", "-y", "-bd", "-bb0",
-                   "-scsUTF-8", str(temporary), f"@{list_path}"]
+        if self.options.engine == CompressionEngine.WINRAR:
+            list_path.write_text("\n".join(names), encoding="utf-16")
+            rar_level = round(level * 5 / 9)
+            command = [executable, "a", "-afzip", f"-m{rar_level}", "-cfg-", "-scul",
+                       "-y", "-inul", str(temporary), f"@{list_path}"]
+        else:
+            list_path.write_text("\n".join(names), encoding="utf-8")
+            command = [executable, "a", "-tzip", f"-mx={level}", "-y", "-bd", "-bb0",
+                       "-scsUTF-8", str(temporary), f"@{list_path}"]
         for entry in group.files:
             entry.status = FileStatus.PROCESSING
         self.on_progress(completed_before, total_bytes, group.files[0].relative_path.as_posix(),
@@ -155,12 +161,17 @@ class Compressor:
             output = process.communicate()[0]
             if process.returncode != 0:
                 detail = output.strip().splitlines()[-1] if output.strip() else "không rõ lỗi"
-                raise OSError(f"7-Zip thất bại (mã {process.returncode}): {detail}")
+                label = "WinRAR" if self.options.engine == CompressionEngine.WINRAR else "7-Zip"
+                raise OSError(f"{label} thất bại (mã {process.returncode}): {detail}")
+            appended = Path(f"{temporary}.zip")
+            if not temporary.exists() and appended.exists():
+                appended.replace(temporary)
             for entry in group.files:
                 entry.status = FileStatus.DONE
             return names
         finally:
             list_path.unlink(missing_ok=True)
+            Path(f"{temporary}.zip").unlink(missing_ok=True)
 
     def run(self, groups: list[ArchiveGroup], oversized: list[FileEntry],
             scan_errors: list[str] | None = None) -> dict[str, object]:

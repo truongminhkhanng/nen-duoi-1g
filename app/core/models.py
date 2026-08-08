@@ -28,6 +28,7 @@ class ConflictAction(str, Enum):
 
 class CompressionEngine(str, Enum):
     AUTO = "auto"
+    WINRAR = "winrar"
     SEVEN_ZIP = "7zip"
     PYTHON = "python"
 

@@ -6,7 +6,7 @@ Thiết lập GUI được lưu bằng `QSettings` dưới organization/applicat
 |---|---:|---|
 | limit / unit | 950 MB | Giới hạn cứng; planner dùng 98% làm sức chứa |
 | compression | Cân bằng | ZIP_DEFLATED level 6 |
-| engine | Tự động | Windows/Linux ưu tiên 7-Zip; macOS dùng Python |
+| engine | Tự động | Chọn WinRAR/7-Zip/Python; macOS luôn dùng Python |
 | prefix | part | Sinh `part_001.zip`… |
 | recursive | bật | Quét thư mục con |
 | keep structure | bật | Giữ đường dẫn tương đối trong ZIP |

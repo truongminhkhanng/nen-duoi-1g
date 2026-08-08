@@ -28,3 +28,19 @@ def test_flat_archives_use_python_to_preserve_names(monkeypatch) -> None:
     info = engines.resolve_engine(CompressionEngine.AUTO, keep_structure=False, system="Linux")
     assert info.engine == CompressionEngine.PYTHON
     assert "Giữ cấu trúc" in (info.fallback_reason or "")
+
+
+def test_winrar_is_available_on_windows(monkeypatch, tmp_path) -> None:
+    executable = tmp_path / "WinRAR.exe"
+    executable.write_bytes(b"exe")
+    monkeypatch.setattr(engines.shutil, "which",
+                        lambda name: str(executable) if name == "WinRAR.exe" else None)
+    info = engines.resolve_engine(CompressionEngine.WINRAR, system="Windows")
+    assert info.engine == CompressionEngine.WINRAR
+    assert info.executable == str(executable)
+
+
+def test_winrar_falls_back_outside_windows() -> None:
+    info = engines.resolve_engine(CompressionEngine.WINRAR, system="Linux")
+    assert info.engine == CompressionEngine.PYTHON
+    assert "Windows" in (info.fallback_reason or "")
