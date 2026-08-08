@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 python3 -m pip install -e '.[dev]'
-python3 -m PyInstaller --noconfirm --clean --windowed --name 'Zip Part Maker' main.py
+python3 -m PyInstaller --noconfirm --clean --windowed --name 'Zip Part Maker' \
+  --icon assets/app-icon.icns --add-data 'assets/app-icon.png:assets' main.py
 
 staging_dir="$(mktemp -d)"
 trap 'rm -rf "$staging_dir"' EXIT
