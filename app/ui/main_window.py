@@ -146,8 +146,10 @@ class MainWindow(QMainWindow):
         self.level_combo.setCurrentIndex(2)
         self.engine_combo = QComboBox()
         self.engine_combo.addItem("Tự động (khuyên dùng)", CompressionEngine.AUTO)
+        self.engine_combo.addItem("WinRAR (Windows)", CompressionEngine.WINRAR)
         self.engine_combo.addItem("7-Zip", CompressionEngine.SEVEN_ZIP)
         self.engine_combo.addItem("Python tích hợp", CompressionEngine.PYTHON)
+        self.engine_combo.setToolTip("Tự động ưu tiên 7-Zip; WinRAR chỉ tạo ZIP trên Windows")
         self.engine_status = QLabel()
         self.engine_status.setObjectName("engineStatus")
         self.prefix_edit = QLineEdit("part")
@@ -342,7 +344,11 @@ class MainWindow(QMainWindow):
     def _refresh_engine_status(self) -> None:
         info = self._engine_info()
         detail = f" — {info.fallback_reason}" if info.fallback_reason else ""
-        self.engine_status.setText(f"Đang dùng: {info.label}{detail}")
+        marker = "●" if not info.fallback_reason else "▲"
+        self.engine_status.setText(f"{marker} Đang dùng: {info.label}{detail}")
+        self.engine_status.setProperty("state", "fallback" if info.fallback_reason else "ready")
+        self.engine_status.style().unpolish(self.engine_status)
+        self.engine_status.style().polish(self.engine_status)
 
     def compress(self) -> None:
         try:
@@ -418,7 +424,8 @@ class MainWindow(QMainWindow):
         self.start_button.setEnabled(not busy and bool(self.scan_result.files))
         can_pause = self.active_engine == CompressionEngine.PYTHON
         self.pause_button.setEnabled(busy and not scanning and can_pause)
-        self.pause_button.setToolTip("" if can_pause else "7-Zip không hỗ trợ tạm dừng an toàn")
+        self.pause_button.setToolTip("" if can_pause else
+                                     "Engine ngoài không hỗ trợ tạm dừng an toàn")
         self.cancel_button.setEnabled(busy)
 
     def _toggle_pause(self) -> None:
@@ -450,7 +457,11 @@ class MainWindow(QMainWindow):
         self.unit_combo.setCurrentText(self.settings.value("unit", "MB", str))
         self.level_combo.setCurrentIndex(self.settings.value("level", 2, int))
         saved_engine = self.settings.value("engine", CompressionEngine.AUTO.value, str)
-        engine_index = self.engine_combo.findData(CompressionEngine(saved_engine))
+        try:
+            engine_value = CompressionEngine(saved_engine)
+        except ValueError:
+            engine_value = CompressionEngine.AUTO
+        engine_index = self.engine_combo.findData(engine_value)
         self.engine_combo.setCurrentIndex(max(engine_index, 0))
         self.prefix_edit.setText(self.settings.value("prefix", "part", str))
         for key, widget in (("recursive", self.recursive_check), ("structure", self.structure_check),
