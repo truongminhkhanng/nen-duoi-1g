@@ -1,6 +1,13 @@
+<p align="center">
+  <img src="assets/app-icon.png" width="128" alt="Zip Part Maker icon">
+</p>
+
 # Zip Part Maker
 
-Phiên bản hiện tại: **0.0.0**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+[![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+Phiên bản hiện tại: **0.0.1**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
 
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 
@@ -14,6 +21,19 @@ Phiên bản hiện tại: **0.0.0**. Xem lịch sử thay đổi tại [CHANGEL
 - Bỏ qua, nén thử riêng hoặc chia file quá lớn thành `.001`… kèm manifest/checksum; có công cụ ghép lại.
 - Xử lý xung đột bằng ghi đè, tên mới, hoặc xóa ZIP do ứng dụng đặt theo prefix sau khi xác nhận.
 - Tạm dừng/hủy an toàn giữa các file, báo cáo `zip_report.json`, kéo-thả thư mục và lưu thiết lập.
+
+## Tải ứng dụng
+
+Tải bản mới nhất tại [GitHub Releases](https://github.com/truongminhkhanng/nen-duoi-1g/releases/latest):
+
+| Hệ điều hành | File | Kiến trúc |
+|---|---|---|
+| Windows | `ZipPartMaker.exe` | x64 |
+| macOS | `ZipPartMaker.dmg` | Apple Silicon (ARM64) |
+| Linux | `ZipPartMaker` | x64 |
+
+Ứng dụng chưa được ký chứng thư thương mại, vì vậy Windows SmartScreen hoặc macOS Gatekeeper có thể
+hiển thị cảnh báo ở lần mở đầu tiên. Chỉ tải file từ trang Releases chính thức của repository này.
 
 ## Chạy từ source
 
@@ -67,3 +87,8 @@ GitHub Actions chạy ba runner riêng và tải artifact tương ứng. Với A
 ## An toàn dữ liệu
 
 Ứng dụng không sửa, di chuyển hoặc xóa file nguồn. Khi hủy/lỗi, chỉ `.tmp` đang tạo bị xóa. Chế độ dọn ZIP cũ chỉ khớp các tên `<prefix>_NNN*.zip` trong đúng thư mục đầu ra và luôn yêu cầu xác nhận.
+
+## Đóng góp và giấy phép
+
+Đọc [CONTRIBUTING.md](CONTRIBUTING.md) trước khi gửi pull request và báo cáo vấn đề bảo mật theo
+[SECURITY.md](SECURITY.md). Dự án được phát hành theo giấy phép [MIT](LICENSE).
