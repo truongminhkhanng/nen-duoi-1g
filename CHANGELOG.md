@@ -1,6 +1,6 @@
 # Changelog
 
-## Chưa phát hành
+## 0.0.5 - 2026-08-09
 
 - Chia file lớn theo luồng 1 MiB, giảm RAM và tránh đọc lại dữ liệu để tính checksum.
 - Ghép file trong worker nền với tiến trình và hủy an toàn, không làm treo giao diện.
