@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog
                                QFrame, QGridLayout, QGroupBox, QHBoxLayout,
                                QLabel, QLineEdit, QMainWindow, QMessageBox,
                                QPlainTextEdit, QProgressBar, QPushButton,
-                               QHeaderView, QTableWidget, QTableWidgetItem,
+                               QAbstractItemView, QHeaderView, QTableView,
                                QVBoxLayout, QWidget)
 
 from app.core.models import CompressionOptions, ConflictAction, OversizeAction, ScanResult
@@ -17,6 +17,7 @@ from app.core.engines import resolve_engine
 from app.core.models import CompressionEngine
 from app.core.planner import plan_archives
 from app.ui.dialogs import JoinDialog, choose_conflict_action, choose_oversize_action
+from app.ui.file_table_model import FileTableModel
 from app.ui.styles import LIGHT_STYLE
 from app.utils.paths import open_folder, validate_prefix
 from app.utils.sizes import format_size, parse_size
@@ -201,16 +202,18 @@ class MainWindow(QMainWindow):
             stats.addWidget(card, 1)
         content_layout.addLayout(stats)
 
-        self.table = QTableWidget(0, 4)
+        self.table = QTableView()
         self.table.setObjectName("fileTable")
-        self.table.setHorizontalHeaderLabels(["Tên file", "Đường dẫn tương đối", "Dung lượng", "Trạng thái"])
+        self.file_model = FileTableModel()
+        self.table.setModel(self.file_model)
         header_view = self.table.horizontalHeader()
-        header_view.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header_view.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
         header_view.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header_view.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         header_view.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.table.setColumnWidth(0, 240)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
         content_layout.addWidget(self.table, 2)
@@ -319,12 +322,7 @@ class MainWindow(QMainWindow):
         self.scan_result = result  # type: ignore[assignment]
         limit = parse_size(self.limit_spin.value(), self.unit_combo.currentText())
         self.groups, self.oversized = plan_archives(self.scan_result.files, limit)
-        self.table.setRowCount(len(self.scan_result.files))
-        for row, entry in enumerate(self.scan_result.files):
-            values = (entry.path.name, entry.relative_path.as_posix(), format_size(entry.size), entry.status.value)
-            for column, value in enumerate(values):
-                self.table.setItem(row, column, QTableWidgetItem(value))
-        self.table.resizeColumnsToContents()
+        self.file_model.set_files(self.scan_result.files)
         self.total_files.setText(f"Tổng file\n{len(self.scan_result.files)}")
         self.total_size.setText(f"Tổng dung lượng\n{format_size(self.scan_result.total_size)}")
         self.estimated.setText(f"ZIP dự kiến\n{len(self.groups)} (+{len(self.oversized)} quá lớn)")
@@ -336,7 +334,7 @@ class MainWindow(QMainWindow):
                 (ZIP_DEFLATED, 9)][self.level_combo.currentIndex()]
 
     def _selected_engine(self) -> CompressionEngine:
-        return self.engine_combo.currentData()
+        return CompressionEngine(self.engine_combo.currentData())
 
     def _engine_info(self):
         return resolve_engine(self._selected_engine(), self.structure_check.isChecked())
@@ -401,10 +399,7 @@ class MainWindow(QMainWindow):
             self._open_output()
 
     def _refresh_statuses(self) -> None:
-        for row, entry in enumerate(self.scan_result.files):
-            item = self.table.item(row, 3)
-            if item:
-                item.setText(entry.status.value)
+        self.file_model.refresh_statuses()
 
     def _failed(self, message: str) -> None:
         self.log.appendPlainText(f"Lỗi: {message}")
