@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.5 - 2026-08-09
+
+- Chia file lớn theo luồng 1 MiB, giảm RAM và tránh đọc lại dữ liệu để tính checksum.
+- Ghép file trong worker nền với tiến trình và hủy an toàn, không làm treo giao diện.
+- Chuyển danh sách file sang model/view để giảm RAM và tăng tốc khi quét nhiều file.
+- Sửa lưu lựa chọn engine với các phiên bản PySide6 trả về dữ liệu combo dạng chuỗi.
+
 ## 0.0.4 - 2026-08-08
 
 - Xóa nút và hộp thoại Trường hợp sử dụng khỏi giao diện theo phản hồi người dùng.

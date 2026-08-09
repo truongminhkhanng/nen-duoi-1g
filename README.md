@@ -7,7 +7,7 @@
 [![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Phiên bản hiện tại: **0.0.4**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+Phiên bản hiện tại: **0.0.5**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
 
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 
@@ -104,7 +104,7 @@ GitHub Actions chạy ba runner riêng và tải artifact tương ứng. Với A
 
 - Dung lượng ZIP chỉ biết chính xác sau khi nén. Nếu một nhóm nhiều file vẫn vượt giới hạn sau biên an toàn 2%, ứng dụng xóa file tạm và tự chia đôi nhóm để thử lại; nếu chỉ còn một file thì ghi lỗi rõ ràng.
 - Tạm dừng/hủy có hiệu lực sau khi `zipfile` ghi xong file hiện tại; Python `zipfile` không cung cấp ngắt an toàn giữa một file.
-- Công cụ ghép chạy đồng bộ; phù hợp thao tác chủ động, nhưng file cực lớn có thể làm hộp thoại ít phản hồi trong lúc kiểm tra SHA-256.
+- Công cụ ghép chạy trong nền, hiển thị tiến trình và cho phép hủy an toàn khi xử lý file lớn.
 - Dark mode riêng chưa ép buộc; widget vẫn kế thừa palette hệ điều hành, stylesheet sáng bảo đảm giao diện nhất quán.
 
 ## An toàn dữ liệu

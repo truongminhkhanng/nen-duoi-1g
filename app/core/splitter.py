@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 from typing import Callable
 
 from app.utils.checksum import sha256_file
+
+
+COPY_CHUNK_SIZE = 1024 * 1024
 
 
 def split_file(source: Path, output: Path, part_size: int,
@@ -15,36 +19,50 @@ def split_file(source: Path, output: Path, part_size: int,
         raise ValueError("Dung lượng phần phải lớn hơn 0")
     output.mkdir(parents=True, exist_ok=True)
     total = source.stat().st_size
-    original_hash = sha256_file(source, cancelled=cancelled)
+    original_digest = sha256()
     parts: list[dict[str, object]] = []
     created: list[Path] = []
     processed = 0
     try:
         with source.open("rb") as reader:
             index = 1
-            while True:
+            while processed < total:
                 if cancelled and cancelled():
                     raise InterruptedError("Đã hủy chia file")
-                chunk = reader.read(part_size)
-                if not chunk:
-                    break
                 part_path = output / f"{source.name}.{index:03d}"
+                part_digest = sha256()
+                part_written = 0
                 with part_path.open("xb") as writer:
-                    writer.write(chunk)
-                created.append(part_path)
-                parts.append({"name": part_path.name, "size": len(chunk),
-                              "sha256": sha256_file(part_path)})
-                processed += len(chunk)
-                if progress:
-                    progress(processed, total)
+                    created.append(part_path)
+                    while part_written < part_size:
+                        if cancelled and cancelled():
+                            raise InterruptedError("Đã hủy chia file")
+                        chunk = reader.read(min(COPY_CHUNK_SIZE, part_size - part_written))
+                        if not chunk:
+                            break
+                        writer.write(chunk)
+                        original_digest.update(chunk)
+                        part_digest.update(chunk)
+                        part_written += len(chunk)
+                        processed += len(chunk)
+                        if progress:
+                            progress(processed, total)
+                if not part_written:
+                    part_path.unlink(missing_ok=True)
+                    created.pop()
+                    break
+                parts.append({"name": part_path.name, "size": part_written,
+                              "sha256": part_digest.hexdigest()})
                 index += 1
+        if processed != total:
+            raise OSError("Dung lượng file nguồn thay đổi trong lúc chia")
         manifest = output / f"{source.name}.manifest.json"
         payload = {
             "format": "zip-part-maker-split-v1",
             "created_at": datetime.now(timezone.utc).isoformat(),
             "original_name": source.name,
             "original_size": total,
-            "original_sha256": original_hash,
+            "original_sha256": original_digest.hexdigest(),
             "parts": parts,
         }
         manifest.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

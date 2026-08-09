@@ -15,7 +15,7 @@ QLabel#pageSubtitle { color: #708096; }
 QGroupBox { font-weight: 650; border: 1px solid #e1e7ef; border-radius: 10px;
             margin-top: 9px; padding-top: 10px; background: #ffffff; }
 QGroupBox::title { subcontrol-origin: margin; left: 14px; padding: 0 5px; color: #31425a; }
-QLineEdit, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTableWidget {
+QLineEdit, QDoubleSpinBox, QComboBox, QPlainTextEdit, QTableWidget, QTableView {
     border: 1px solid #d8e0ea; border-radius: 6px; padding: 7px; background: #ffffff;
 }
 QLineEdit:focus, QDoubleSpinBox:focus, QComboBox:focus { border: 1px solid #2684ff; }
@@ -36,7 +36,7 @@ QLabel#panelTitle { color: #26364d; font-size: 14px; font-weight: 700; }
 QLabel#engineStatus { font-size: 12px; }
 QLabel#engineStatus[state="ready"] { color: #16845b; }
 QLabel#engineStatus[state="fallback"] { color: #b26a00; }
-QTableWidget#fileTable { border-radius: 10px; gridline-color: #edf1f6;
+QTableWidget#fileTable, QTableView#fileTable { border-radius: 10px; gridline-color: #edf1f6;
                          alternate-background-color: #f8fafd; }
 QHeaderView::section { color: #526279; background: #eef3f8; border: 0;
                        border-bottom: 1px solid #dce4ed; padding: 8px; font-weight: 650; }
