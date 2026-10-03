@@ -37,24 +37,24 @@ def resolve_engine(requested: CompressionEngine, keep_structure: bool = True,
                    system: str | None = None) -> EngineInfo:
     current = system or platform.system()
     if current == "Darwin":
-        return EngineInfo(CompressionEngine.PYTHON, "Python tích hợp",
-                          fallback_reason="macOS luôn dùng engine Python")
+        return EngineInfo(CompressionEngine.PYTHON, "Công cụ tích hợp",
+                          fallback_reason="macOS sử dụng công cụ nén tích hợp")
     if requested == CompressionEngine.PYTHON:
-        return EngineInfo(CompressionEngine.PYTHON, "Python tích hợp")
+        return EngineInfo(CompressionEngine.PYTHON, "Công cụ tích hợp")
     if not keep_structure:
-        return EngineInfo(CompressionEngine.PYTHON, "Python tích hợp",
-                          fallback_reason="Engine ngoài cần bật Giữ cấu trúc thư mục")
+        return EngineInfo(CompressionEngine.PYTHON, "Công cụ tích hợp",
+                          fallback_reason="7-Zip và WinRAR cần bật Giữ cấu trúc thư mục")
     if requested == CompressionEngine.WINRAR:
         if current != "Windows":
-            return EngineInfo(CompressionEngine.PYTHON, "Python tích hợp",
+            return EngineInfo(CompressionEngine.PYTHON, "Công cụ tích hợp",
                               fallback_reason="WinRAR tạo ZIP chỉ được hỗ trợ trên Windows")
         executable = find_winrar(current)
         if executable:
             return EngineInfo(CompressionEngine.WINRAR, "WinRAR", executable)
-        return EngineInfo(CompressionEngine.PYTHON, "Python tích hợp",
+        return EngineInfo(CompressionEngine.PYTHON, "Công cụ tích hợp",
                           fallback_reason="Không tìm thấy WinRAR")
     executable = find_7zip(current)
     if executable:
         return EngineInfo(CompressionEngine.SEVEN_ZIP, "7-Zip", executable)
-    return EngineInfo(CompressionEngine.PYTHON, "Python tích hợp",
+    return EngineInfo(CompressionEngine.PYTHON, "Công cụ tích hợp",
                       fallback_reason="Không tìm thấy 7-Zip")

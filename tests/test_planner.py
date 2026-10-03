@@ -31,3 +31,12 @@ def test_oversized_file_is_marked() -> None:
 def test_invalid_limit() -> None:
     with pytest.raises(ValueError):
         plan_archives([], 0)
+
+
+def test_replanning_resets_old_statuses() -> None:
+    item = entry("data.bin", 101)
+    plan_archives([item], 100)
+    assert item.status == FileStatus.TOO_LARGE
+    groups, oversized = plan_archives([item], 200)
+    assert groups and not oversized
+    assert item.status == FileStatus.READY

@@ -3,10 +3,6 @@ name: zip-part-maker
 description: Develop and verify the Zip Part Maker PySide6 desktop application.
 ---
 
-# Zip Part Maker development
+# Zip Part Maker development — legacy path
 
-1. Preserve the separation between Qt UI/workers and `app/core`.
-2. Keep source files immutable and archive writes transactional (`.tmp`, verify, rename).
-3. Run `python -m pytest` after core changes.
-4. Run `QT_QPA_PLATFORM=offscreen python -c "from PySide6.QtWidgets import QApplication; from app.ui.main_window import MainWindow; a=QApplication([]); w=MainWindow(); w.close()"` after UI changes.
-5. Build on the native target OS only.
+Workflows đã hợp nhất vào [../SKILL.md](../SKILL.md): core-archive-safety, ui-micro-change, compression-engine-check và native-build-release giữ Qt/core separation, immutable inputs, transactional archives, pytest, UI offscreen smoke và native build. Các workflow memory/history/local index nằm trong file canonical. Entry point: [../AGENT.md](../AGENT.md); chỉ load skill liên quan.

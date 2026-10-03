@@ -11,7 +11,7 @@ def verify_zip(path: Path) -> tuple[int, str]:
         with ZipFile(path, "r") as archive:
             bad = archive.testzip()
             if bad:
-                raise BadZipFile(f"File lỗi trong ZIP: {bad}")
+                raise BadZipFile(f"Tệp bị lỗi trong ZIP: {bad}")
     except BadZipFile:
         raise
     return path.stat().st_size, sha256_file(path)

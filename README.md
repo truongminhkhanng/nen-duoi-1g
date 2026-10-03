@@ -7,7 +7,7 @@
 [![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Phiên bản hiện tại: **0.0.5**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+Phiên bản hiện tại: **0.0.6**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
 
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 
@@ -80,6 +80,28 @@ python -m pip install -e ".[dev]"
 python -m pytest
 ```
 
+## Làm việc với AI và local code intelligence
+
+Gọi `@AGENT.md [yêu cầu]` để agent tự đọc working memory, chọn context liên quan,
+query local index và xác minh source trước khi sửa. Quy trình và rule nằm trong
+[AGENT.md](AGENT.md); quyết định dài hạn ở [LONG_TERM_MEMORY.md](LONG_TERM_MEMORY.md),
+lịch sử truy theo [HISTORY/INDEX.md](HISTORY/INDEX.md). Các đường dẫn `docs/CLAUDE.md`,
+`docs/CONFIG.md`, `docs/SKILL.md` vẫn tồn tại và dẫn về context canonical ở root.
+
+Index chỉ dùng Python 3.11+ standard library, không cần cài thêm:
+
+```bash
+python3 -m tools.codeintel status
+python3 -m tools.codeintel update
+python3 -m tools.codeintel explore 'MainWindow compress'
+python3 -m unittest tools.codeintel.test_indexer -v
+```
+
+Dùng `python` thay `python3` nếu đó là executable của virtualenv/Windows hiện tại.
+Cache `.agent/codegraph.sqlite` và state JSON được ignore, có thể rebuild;
+tool source/ignore policy được giữ trong repo. Xem [tools/codeintel/README.md](tools/codeintel/README.md)
+để biết các lệnh search/callers/callees/impact và giới hạn heuristic. Index không thay source thật.
+
 ## Build riêng từng nền tảng
 
 PyInstaller không cross-compile. Hãy chạy script trên đúng hệ điều hành đích:
@@ -95,10 +117,14 @@ GitHub Actions chạy ba runner riêng và tải artifact tương ứng. Với A
 ## Cách dùng
 
 1. Chọn hoặc kéo-thả thư mục nguồn; đầu ra mặc định là `ZIP_PARTS` bên trong nguồn.
-2. Chọn giới hạn, mức nén, prefix và tùy chọn quét; bấm **Quét file**.
+2. Chọn giới hạn, mức nén, tiền tố tên ZIP và tùy chọn quét; bấm **Quét thư mục**.
 3. Xem số ZIP dự kiến và trạng thái file quá lớn; bấm **Bắt đầu nén**.
 4. Nếu có file quá lớn hoặc ZIP cũ, chọn chính sách trong hộp thoại.
 5. Kiểm tra ZIP và `zip_report.json` trong thư mục đầu ra.
+
+Để ghép tệp đã chia, chọn **Ghép tệp đã chia…**, mở danh sách `.manifest.json`
+và chọn thư mục lưu kết quả. Giữ danh sách ghép và đầy đủ các phần `.001`, `.002`…
+trong cùng thư mục. Nếu tên tệp kết quả đã tồn tại, ứng dụng tạo tên mới.
 
 ## Giới hạn đã biết
 
@@ -109,7 +135,10 @@ GitHub Actions chạy ba runner riêng và tải artifact tương ứng. Với A
 
 ## An toàn dữ liệu
 
-Ứng dụng không sửa, di chuyển hoặc xóa file nguồn. Khi hủy/lỗi, chỉ `.tmp` đang tạo bị xóa. Chế độ dọn ZIP cũ chỉ khớp các tên `<prefix>_NNN*.zip` trong đúng thư mục đầu ra và luôn yêu cầu xác nhận.
+Ứng dụng không sửa, di chuyển hoặc xóa file nguồn. Thư mục kết quả phải khác thư mục nguồn.
+Khi hủy/lỗi, chỉ các tệp tạm do tác vụ tạo bị xóa. ZIP cũ được giữ đến khi ZIP thay thế
+đã nén và kiểm tra thành công. Công cụ ghép kiểm tra tên, dung lượng và SHA-256 của các phần.
+Chế độ dọn ZIP cũ chỉ khớp các tên `<prefix>_NNN*.zip` trong đúng thư mục đầu ra và luôn yêu cầu xác nhận.
 
 ## Đóng góp và giấy phép
 

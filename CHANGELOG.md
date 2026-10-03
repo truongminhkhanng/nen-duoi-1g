@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.6 - 2026-10-03
+
+- Chuẩn hóa nội dung tiếng Việt trên màn hình chính, tùy chọn nén và hộp thoại ghép tệp.
+- Sửa hủy quét/nén, đặt lại trạng thái tạm dừng và tiến trình với dữ liệu trên 2 GB.
+- Yêu cầu quét lại khi thay thư mục hoặc tùy chọn quét; khóa thiết lập khi tác vụ đang chạy.
+- Kiểm tra danh sách ghép, dung lượng và SHA-256; hỗ trợ tệp rỗng và hủy giữa các khối dữ liệu.
+- Giữ nguyên tệp kết quả sẵn có khi ghép; chỉ dọn tệp tạm do tác vụ tạo.
+- Giữ ZIP cũ cho đến khi ZIP thay thế được kiểm tra thành công; sửa lọc ZIP theo tiền tố có dấu ngoặc.
+- Sửa vòng đời worker khi đóng hộp thoại ghép và bổ sung báo cáo các tệp đã chia.
+- Bổ sung quy trình Agent/Memory/History và công cụ tra cứu source cục bộ.
+- Build và Release lấy số phiên bản từ ứng dụng, kiểm tra tag và chạy test trên ba hệ điều hành.
+
 ## 0.0.5 - 2026-08-09
 
 - Chia file lớn theo luồng 1 MiB, giảm RAM và tránh đọc lại dữ liệu để tính checksum.

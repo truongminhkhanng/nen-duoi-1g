@@ -1,16 +1,3 @@
-# Cấu hình
+# Cấu hình — legacy path
 
-Thiết lập GUI được lưu bằng `QSettings` dưới organization/application `ZipPartMaker`.
-
-| Thiết lập | Mặc định | Ý nghĩa |
-|---|---:|---|
-| limit / unit | 950 MB | Giới hạn cứng; planner dùng 98% làm sức chứa |
-| compression | Cân bằng | ZIP_DEFLATED level 6 |
-| engine | Tự động | Chọn WinRAR/7-Zip/Python; macOS luôn dùng Python |
-| prefix | part | Sinh `part_001.zip`… |
-| recursive | bật | Quét thư mục con |
-| keep structure | bật | Giữ đường dẫn tương đối trong ZIP |
-| skip hidden/system | bật | Loại file ẩn/hệ thống |
-| open output | bật | Mở kết quả sau khi hoàn thành |
-
-Không có telemetry hoặc cấu hình quyền administrator.
+Facts/defaults được hợp nhất vào [../CONFIG.md](../CONFIG.md), đặc biệt section Limits and settings, Integrations và Analytics. Giữ QSettings ZipPartMaker/ZipPartMaker, 950 MB/98%, cân bằng level 6, engine selection/fallback, prefix và các toggle; không thêm telemetry/admin requirement. Source reference được bổ sung để xác minh trước khi sửa. Entry point: [../AGENT.md](../AGENT.md).

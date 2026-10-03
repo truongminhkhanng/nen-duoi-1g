@@ -10,6 +10,7 @@ from app.core.scanner import scan_files
 class ScanWorker(QObject):
     finished = Signal(object)
     failed = Signal(str)
+    cancelled = Signal()
     log = Signal(str)
 
     def __init__(self, source: Path, output: Path, recursive: bool,
@@ -29,7 +30,9 @@ class ScanWorker(QObject):
                                 self.skip_hidden, self.skip_system,
                                 lambda: self._cancelled, self.log.emit)
             self.finished.emit(result)
-        except (ValueError, OSError, InterruptedError) as error:
+        except InterruptedError:
+            self.cancelled.emit()
+        except Exception as error:
             self.failed.emit(str(error))
 
     @Slot()

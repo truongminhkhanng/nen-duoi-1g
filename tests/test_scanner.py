@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from app.core.scanner import scan_files
 
 
@@ -28,3 +30,9 @@ def test_non_recursive(tmp_path: Path) -> None:
     (tmp_path / "sub" / "nested.txt").touch()
     result = scan_files(tmp_path, recursive=False, skip_hidden=False)
     assert [x.relative_path.as_posix() for x in result.files] == ["top.txt"]
+
+
+def test_cancellation_is_not_returned_as_a_scan_error(tmp_path: Path) -> None:
+    (tmp_path / "data.txt").write_text("data")
+    with pytest.raises(InterruptedError):
+        scan_files(tmp_path, cancelled=lambda: True)

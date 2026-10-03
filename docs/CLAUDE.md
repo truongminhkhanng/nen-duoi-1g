@@ -1,7 +1,5 @@
-# Hướng dẫn phát triển
+# Hướng dẫn phát triển — legacy path
 
-- Python 3.11+, type hints và `pathlib.Path` cho mọi đường dẫn.
-- `app/core` không phụ thuộc Qt; UI chỉ điều phối worker và hiển thị trạng thái.
-- Không thao tác file nguồn. Mọi archive phải đi qua file `.tmp`, verifier và rename.
-- Một thay đổi về planner/scanner/compressor/splitter phải kèm test hồi quy tương ứng.
-- Không gọi command shell phụ thuộc nền tảng để nén; chỉ dùng thư viện chuẩn `zipfile`.
+Canonical rules đã hợp nhất vào [../CLAUDE.md](../CLAUDE.md); entry point là [../AGENT.md](../AGENT.md).
+
+Giữ Python 3.11+/type hints/Path, Qt-core separation, immutable inputs, `.tmp` → verify → rename và core regression. Rule cũ “chỉ dùng zipfile” được đánh dấu **Deprecated** trong section Legacy context migration vì source đã hỗ trợ 7-Zip/WinRAR; không loại bỏ các engine hiện có. Đọc section liên quan ở file canonical, không duy trì một bộ rule thứ hai tại đây.

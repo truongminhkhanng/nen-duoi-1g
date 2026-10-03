@@ -11,7 +11,7 @@ class CompressWorker(QObject):
     failed = Signal(str)
     cancelled = Signal()
     log = Signal(str)
-    progress = Signal(int, int, str, str, int)
+    progress = Signal("qlonglong", "qlonglong", str, str, int)
 
     def __init__(self, options: CompressionOptions, groups: list[ArchiveGroup],
                  oversized: list[FileEntry], scan_errors: list[str]) -> None:

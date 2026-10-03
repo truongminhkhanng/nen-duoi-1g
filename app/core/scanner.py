@@ -85,6 +85,8 @@ def scan_files(source: Path, output: Path | None = None, recursive: bool = True,
                         result.files.append(FileEntry(path, path.relative_to(source), path.stat().st_size))
                 except (PermissionError, FileNotFoundError, OSError) as error:
                     on_error(error)
+    except InterruptedError:
+        raise
     except (PermissionError, FileNotFoundError, OSError) as error:
         on_error(error)
     result.files.sort(key=lambda item: item.relative_path.as_posix().casefold())

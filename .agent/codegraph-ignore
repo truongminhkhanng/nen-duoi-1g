@@ -1,0 +1,23 @@
+# Project-relative globs, one per line. No negation; never index credentials.
+# Built-in excludes also protect caches, environments, credentials and symlinks.
+.git/
+.agents/
+.codex/
+.aws/
+.venv/
+__pycache__/
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+HISTORY/
+MEMORY.md
+LONG_TERM_MEMORY.md
+.env*
+*credentials*
+*secret*
+*.pem
+*.key
+*.p12
+*.pfx
+# Add paths to private fixtures/local config here BEFORE indexing them.

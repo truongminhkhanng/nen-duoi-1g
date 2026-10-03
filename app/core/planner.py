@@ -13,6 +13,8 @@ def plan_archives(files: list[FileEntry], limit_bytes: int,
     groups: list[ArchiveGroup] = []
     oversized: list[FileEntry] = []
     for entry in sorted(files, key=lambda item: (-item.size, item.relative_path.as_posix().casefold())):
+        entry.status = FileStatus.READY
+        entry.error = None
         if entry.size > capacity:
             entry.status = FileStatus.TOO_LARGE
             oversized.append(entry)

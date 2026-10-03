@@ -5,9 +5,11 @@ import subprocess
 import threading
 import time
 from datetime import datetime, timezone
+from glob import escape
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Callable
-from zipfile import ZipFile
+from zipfile import BadZipFile, ZipFile
 
 from app.core.models import (ArchiveGroup, ArchiveResult, CompressionOptions,
                              CompressionEngine, ConflictAction, FileEntry,
@@ -57,11 +59,13 @@ class Compressor:
         path = self.options.output / f"{prefix}_{index:03d}.zip"
         if self.options.conflict_action == ConflictAction.RENAME:
             path = unique_path(path)
-        elif path.exists() and self.options.conflict_action == ConflictAction.OVERWRITE:
-            path.unlink()
-        elif path.exists():
-            raise FileExistsError(f"File đã tồn tại: {path.name}")
+        elif path.exists() and self.options.conflict_action != ConflictAction.OVERWRITE:
+            raise FileExistsError(f"Tệp đã tồn tại: {path.name}")
         return path
+
+    def _validate_output(self) -> None:
+        if self.options.output.resolve() == self.options.source.resolve():
+            raise ValueError("Thư mục lưu kết quả phải khác thư mục nguồn")
 
     def _arcname(self, entry: FileEntry, used: set[str]) -> str:
         relative = entry.relative_path if self.options.keep_structure else Path(entry.path.name)
@@ -80,10 +84,11 @@ class Compressor:
 
     def create_archive(self, group: ArchiveGroup, index: int,
                        completed_before: int, total_bytes: int) -> ArchiveResult:
+        self._validate_output()
         self.options.output.mkdir(parents=True, exist_ok=True)
         target = self._target(index)
-        temporary = target.with_suffix(target.suffix + ".tmp")
-        temporary.unlink(missing_ok=True)
+        staging = TemporaryDirectory(prefix=f".{target.name}.", dir=self.options.output.resolve())
+        temporary = Path(staging.name) / f"{target.name}.tmp"
         archived: list[str] = []
         used: set[str] = set()
         current_total = max(group.estimated_size, 1)
@@ -117,22 +122,26 @@ class Compressor:
                     f"{target.name} có dung lượng {size} byte, vượt giới hạn"
                 )
             temporary.replace(target)
-            return ArchiveResult(target, size, digest, archived)
-        except BaseException:
-            temporary.unlink(missing_ok=True)
             for entry in group.files:
-                if entry.status == FileStatus.PROCESSING:
-                    entry.status = FileStatus.ERROR
+                entry.error = None
+            return ArchiveResult(target, size, digest, archived)
+        except BaseException as error:
+            for entry in group.files:
+                entry.status = FileStatus.ERROR
+                entry.error = str(error)
             raise
+        finally:
+            staging.cleanup()
 
     def _create_with_external_engine(self, group: ArchiveGroup, temporary: Path, target: Path,
                                      completed_before: int, total_bytes: int) -> list[str]:
         executable = self.options.engine_executable
+        label = "WinRAR" if self.options.engine == CompressionEngine.WINRAR else "7-Zip"
         if not executable:
-            raise OSError("Không tìm thấy chương trình 7-Zip")
+            raise OSError(f"Không tìm thấy công cụ nén {label}")
         names = [safe_archive_name(entry.relative_path) for entry in group.files]
         if any("\n" in name or "\r" in name for name in names):
-            raise ValueError("7-Zip không hỗ trợ tên file chứa ký tự xuống dòng")
+            raise ValueError(f"{label} không hỗ trợ tên tệp chứa ký tự xuống dòng")
         list_path = temporary.with_suffix(temporary.suffix + ".files.txt")
         level = 0 if self.options.compresslevel is None else self.options.compresslevel
         if self.options.engine == CompressionEngine.WINRAR:
@@ -152,17 +161,23 @@ class Compressor:
             process = subprocess.Popen(command, cwd=self.options.source, stdout=subprocess.PIPE,
                                        stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                                        errors="replace")
-            while process.poll() is None:
+            while True:
                 if self.controller.cancelled():
                     process.terminate()
-                    process.wait()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait()
                     raise InterruptedError("Đã hủy")
-                time.sleep(0.1)
-            output = process.communicate()[0]
+                try:
+                    output = process.communicate(timeout=0.1)[0]
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
             if process.returncode != 0:
                 detail = output.strip().splitlines()[-1] if output.strip() else "không rõ lỗi"
-                label = "WinRAR" if self.options.engine == CompressionEngine.WINRAR else "7-Zip"
-                raise OSError(f"{label} thất bại (mã {process.returncode}): {detail}")
+                raise OSError(f"{label} không thể nén (mã lỗi {process.returncode}): {detail}")
             appended = Path(f"{temporary}.zip")
             if not temporary.exists() and appended.exists():
                 appended.replace(temporary)
@@ -175,16 +190,20 @@ class Compressor:
 
     def run(self, groups: list[ArchiveGroup], oversized: list[FileEntry],
             scan_errors: list[str] | None = None) -> dict[str, object]:
+        self._validate_output()
         self.options.output.mkdir(parents=True, exist_ok=True)
         started = datetime.now(timezone.utc)
-        total_bytes = sum(group.estimated_size for group in groups)
+        total_bytes = sum(group.estimated_size for group in groups) + sum(x.size for x in oversized)
         completed = 0
         archives: list[ArchiveResult] = []
         skipped: list[str] = []
+        split_files: list[dict[str, str]] = []
         errors = list(scan_errors or [])
         if self.options.conflict_action == ConflictAction.CLEAN:
+            self.controller.checkpoint()
             prefix = validate_prefix(self.options.prefix)
-            for old in self.options.output.glob(f"{prefix}_[0-9][0-9][0-9]*.zip"):
+            for old in self.options.output.glob(f"{escape(prefix)}_[0-9][0-9][0-9]*.zip"):
+                self.controller.checkpoint()
                 old.unlink()
         pending = list(groups)
         index = 1
@@ -208,7 +227,9 @@ class Compressor:
                     group.files[0].status = FileStatus.ERROR
                     errors.append(str(error))
                     self.on_log(f"Lỗi: {error}")
-            except (OSError, ValueError) as error:
+            except InterruptedError:
+                raise
+            except (OSError, ValueError, BadZipFile) as error:
                 errors.append(str(error))
                 self.on_log(f"Lỗi: {error}")
             if not deferred:
@@ -221,20 +242,40 @@ class Compressor:
                 entry.status = FileStatus.SKIPPED
                 skipped.append(entry.relative_path.as_posix())
             elif self.options.oversize_action == OversizeAction.SPLIT:
-                manifest = split_file(entry.path, self.options.output,
-                                      max(1, int(self.options.limit_bytes * 0.98)),
-                                      self.controller.cancelled)
-                entry.status = FileStatus.DONE
-                self.on_log(f"Đã chia {entry.relative_path}: {manifest.name}")
+                def checkpoint() -> bool:
+                    self.controller.checkpoint()
+                    return False
+
+                try:
+                    manifest = split_file(entry.path, self.options.output,
+                                          max(1, int(self.options.limit_bytes * 0.98)), checkpoint,
+                                          lambda done, _total: self.on_progress(
+                                              completed + done, max(total_bytes, 1),
+                                              entry.relative_path.as_posix(), "", 0))
+                    entry.status = FileStatus.DONE
+                    split_files.append({"file": entry.relative_path.as_posix(), "manifest": manifest.name})
+                    self.on_log(f"Đã chia {entry.relative_path}: {manifest.name}")
+                except InterruptedError:
+                    raise
+                except (OSError, ValueError) as error:
+                    entry.status = FileStatus.ERROR
+                    entry.error = str(error)
+                    errors.append(str(error))
+                    self.on_log(f"Lỗi: {error}")
             else:
                 try:
                     result = self.create_archive(ArchiveGroup([entry], entry.size), next_index,
-                                                 completed, max(total_bytes + entry.size, 1))
+                                                 completed, max(total_bytes, 1))
                     archives.append(result)
                     next_index += 1
-                except (OSError, ValueError) as error:
+                except InterruptedError:
+                    raise
+                except (OSError, ValueError, BadZipFile) as error:
                     entry.status = FileStatus.ERROR
                     errors.append(str(error))
+                    self.on_log(f"Lỗi: {error}")
+            completed += entry.size
+            self.on_progress(completed, max(total_bytes, 1), "", "", 100)
         finished = datetime.now(timezone.utc)
         report: dict[str, object] = {
             "started_at": started.isoformat(), "finished_at": finished.isoformat(),
@@ -245,7 +286,7 @@ class Compressor:
             "total_size": sum(group.estimated_size for group in groups) + sum(x.size for x in oversized),
             "archives": [{"name": x.path.name, "size": x.size, "sha256": x.sha256,
                            "files": x.files} for x in archives],
-            "skipped_files": skipped, "errors": errors,
+            "skipped_files": skipped, "split_files": split_files, "errors": errors,
             "oversized_files": [x.relative_path.as_posix() for x in oversized],
         }
         report_path = self.options.output / "zip_report.json"

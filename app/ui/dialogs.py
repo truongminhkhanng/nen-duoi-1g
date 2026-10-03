@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from glob import escape
 
 from PySide6.QtCore import QThread
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
                                QLineEdit, QMessageBox, QProgressBar, QPushButton)
 
@@ -12,35 +14,44 @@ from app.workers.join_worker import JoinWorker
 
 def choose_oversize_action(parent: object, count: int) -> OversizeAction | None:
     box = QMessageBox(parent)  # type: ignore[arg-type]
-    box.setWindowTitle("File quá lớn")
-    box.setText(f"Phát hiện {count} file mà riêng từng file đã lớn hơn giới hạn ZIP.\n\n"
-                "App được thiết kế để phân phối nhiều file vào các ZIP độc lập; một file đơn quá "
-                "lớn không thể bảo đảm nằm trong ZIP dưới giới hạn. Chọn cách xử lý:")
+    box.setWindowTitle("Tệp vượt dung lượng dự kiến")
+    box.setText(f"Có {count} tệp vượt dung lượng dự kiến cho một ZIP, đã tính phần dự phòng 2%.\n\n"
+                "Bạn có thể bỏ qua, nén thử từng tệp hoặc chia thành các phần nhỏ. "
+                "Nén thử chỉ tạo ZIP khi kết quả nhỏ hơn giới hạn. Các phần đã chia cần "
+                "được tải đủ và ghép lại trước khi sử dụng.")
     skip = box.addButton("Bỏ qua", QMessageBox.ButtonRole.AcceptRole)
     attempt = box.addButton("Nén thử riêng", QMessageBox.ButtonRole.ActionRole)
-    split = box.addButton("Chia file (phải ghép lại)", QMessageBox.ButtonRole.ActionRole)
-    box.addButton(QMessageBox.StandardButton.Cancel)
+    split = box.addButton("Chia tệp để ghép lại", QMessageBox.ButtonRole.ActionRole)
+    box.addButton("Hủy", QMessageBox.ButtonRole.RejectRole)
+    box.setDefaultButton(skip)
     box.exec()
     return {skip: OversizeAction.SKIP, attempt: OversizeAction.TRY_COMPRESS,
             split: OversizeAction.SPLIT}.get(box.clickedButton())
 
 
 def choose_conflict_action(parent: object, output: Path, prefix: str) -> ConflictAction | None:
-    if not list(output.glob(f"{prefix}_[0-9][0-9][0-9]*.zip")):
+    if not list(output.glob(f"{escape(prefix)}_[0-9][0-9][0-9]*.zip")):
         return ConflictAction.RENAME
     box = QMessageBox(parent)  # type: ignore[arg-type]
-    box.setWindowTitle("File ZIP đã tồn tại")
-    box.setText("Thư mục kết quả đã có ZIP cùng prefix. Chọn cách xử lý:")
+    box.setWindowTitle("ZIP đã tồn tại")
+    box.setText(f"Thư mục kết quả đã có ZIP với tiền tố “{prefix}”. Chọn cách xử lý:")
     overwrite = box.addButton("Ghi đè", QMessageBox.ButtonRole.AcceptRole)
     rename = box.addButton("Tạo tên mới", QMessageBox.ButtonRole.ActionRole)
     clean = box.addButton("Xóa ZIP cũ", QMessageBox.ButtonRole.DestructiveRole)
-    box.addButton(QMessageBox.StandardButton.Cancel)
+    box.addButton("Hủy", QMessageBox.ButtonRole.RejectRole)
+    box.setDefaultButton(rename)
     box.exec()
     clicked = box.clickedButton()
     if clicked == clean:
-        confirm = QMessageBox.question(parent, "Xác nhận xóa",
-            "Chỉ các ZIP có tên do ứng dụng tạo với prefix này sẽ bị xóa. Tiếp tục?")
-        if confirm != QMessageBox.StandardButton.Yes:
+        confirm = QMessageBox(parent)  # type: ignore[arg-type]
+        confirm.setWindowTitle("Xác nhận xóa ZIP cũ")
+        confirm.setText(f"Các ZIP khớp mẫu {prefix}_NNN*.zip trong thư mục sau sẽ bị xóa:\n"
+                        f"{output}\n\nCác tệp này không được đưa vào thùng rác.")
+        delete = confirm.addButton("Xóa ZIP cũ", QMessageBox.ButtonRole.DestructiveRole)
+        cancel = confirm.addButton("Hủy", QMessageBox.ButtonRole.RejectRole)
+        confirm.setDefaultButton(cancel)
+        confirm.exec()
+        if confirm.clickedButton() != delete:
             return None
     return {overwrite: ConflictAction.OVERWRITE, rename: ConflictAction.RENAME,
             clean: ConflictAction.CLEAN}.get(clicked)
@@ -49,47 +60,57 @@ def choose_conflict_action(parent: object, output: Path, prefix: str) -> Conflic
 class JoinDialog(QDialog):
     def __init__(self, parent: object = None) -> None:
         super().__init__(parent)  # type: ignore[arg-type]
-        self.setWindowTitle("Ghép file từ manifest")
+        self.setWindowTitle("Ghép tệp đã chia")
+        self.setMinimumWidth(620)
         self.thread: QThread | None = None
         self.worker: JoinWorker | None = None
+        self._outcome: tuple[str, str] | None = None
         layout = QFormLayout(self)
         self.manifest = QLineEdit()
         self.output = QLineEdit()
-        pick_manifest = QPushButton("Chọn…")
-        pick_output = QPushButton("Chọn…")
-        pick_manifest.clicked.connect(self._pick_manifest)
-        pick_output.clicked.connect(self._pick_output)
-        layout.addRow("Manifest JSON", self.manifest)
-        layout.addRow("Thư mục đầu ra", self.output)
-        layout.addRow(pick_manifest, pick_output)
+        self.manifest.setPlaceholderText("Chọn tệp .manifest.json được tạo khi chia tệp")
+        self.manifest.setToolTip("Giữ tệp .manifest.json và đầy đủ các phần .001, .002… trong cùng thư mục.")
+        self.output.setPlaceholderText("Chọn thư mục lưu tệp sau khi ghép")
+        self.output.setToolTip("Nếu tên tệp đã tồn tại, ứng dụng tạo tên mới để giữ nguyên tệp cũ.")
+        self.pick_manifest = QPushButton("Chọn danh sách ghép…")
+        self.pick_output = QPushButton("Chọn nơi lưu…")
+        self.pick_manifest.clicked.connect(self._pick_manifest)
+        self.pick_output.clicked.connect(self._pick_output)
+        layout.addRow("Danh sách ghép", self.manifest)
+        layout.addRow("Thư mục lưu kết quả", self.output)
+        layout.addRow(self.pick_manifest, self.pick_output)
         self.progress = QProgressBar()
         self.progress.setVisible(False)
         layout.addRow("Tiến trình", self.progress)
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok |
                                         QDialogButtonBox.StandardButton.Cancel)
+        self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Ghép tệp")
+        self.buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Đóng")
         self.buttons.accepted.connect(self._join)
         self.buttons.rejected.connect(self._cancel_or_reject)
         layout.addRow(self.buttons)
 
     def _pick_manifest(self) -> None:
-        path, _ = QFileDialog.getOpenFileName(self, "Chọn manifest", filter="JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, "Chọn danh sách ghép", filter="Danh sách ghép (*.manifest.json);;Tệp JSON (*.json)")
         if path:
             self.manifest.setText(path)
             self.output.setText(str(Path(path).parent))
 
     def _pick_output(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, "Chọn thư mục đầu ra")
+        path = QFileDialog.getExistingDirectory(self, "Chọn thư mục lưu kết quả")
         if path:
             self.output.setText(path)
 
     def _join(self) -> None:
+        if self.thread is not None:
+            return
         try:
             manifest = Path(self.manifest.text())
             output = Path(self.output.text())
             if not manifest.is_file():
-                raise ValueError("Hãy chọn manifest hợp lệ")
+                raise ValueError("Hãy chọn tệp danh sách ghép hợp lệ")
             if not self.output.text().strip():
-                raise ValueError("Hãy chọn thư mục đầu ra")
+                raise ValueError("Hãy chọn thư mục lưu kết quả")
         except ValueError as error:
             QMessageBox.warning(self, "Thiết lập chưa hợp lệ", str(error))
             return
@@ -98,8 +119,11 @@ class JoinDialog(QDialog):
         self.progress.setVisible(True)
         self.manifest.setEnabled(False)
         self.output.setEnabled(False)
+        self.pick_manifest.setEnabled(False)
+        self.pick_output.setEnabled(False)
         self.buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
         self.buttons.button(QDialogButtonBox.StandardButton.Cancel).setText("Hủy ghép")
+        self._outcome = None
         thread = QThread(self)
         worker = JoinWorker(manifest, output)
         worker.moveToThread(thread)
@@ -121,21 +145,30 @@ class JoinDialog(QDialog):
 
     def _joined(self, result: str) -> None:
         self.progress.setValue(100)
-        QMessageBox.information(self, "Hoàn thành", f"Đã ghép: {result}")
-        self.accept()
+        self._outcome = ("finished", result)
 
     def _join_failed(self, message: str) -> None:
-        QMessageBox.critical(self, "Không thể ghép", message)
+        self._outcome = ("failed", message)
 
     def _join_cancelled(self) -> None:
-        QMessageBox.information(self, "Đã hủy", "Đã hủy ghép và xóa file tạm")
+        self._outcome = ("cancelled", "")
 
     def _cancel_or_reject(self) -> None:
         if self.worker:
             self.worker.cancel()
             self.buttons.button(QDialogButtonBox.StandardButton.Cancel).setEnabled(False)
         else:
-            self.reject()
+            super().reject()
+
+    def reject(self) -> None:
+        self._cancel_or_reject()
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        if self.thread is not None:
+            self._cancel_or_reject()
+            event.ignore()
+        else:
+            super().closeEvent(event)
 
     def _join_thread_done(self) -> None:
         self.thread = None
@@ -143,7 +176,19 @@ class JoinDialog(QDialog):
         if self.isVisible():
             self.manifest.setEnabled(True)
             self.output.setEnabled(True)
+            self.pick_manifest.setEnabled(True)
+            self.pick_output.setEnabled(True)
             self.buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
             cancel = self.buttons.button(QDialogButtonBox.StandardButton.Cancel)
             cancel.setEnabled(True)
-            cancel.setText("Hủy")
+            cancel.setText("Đóng")
+        outcome, self._outcome = self._outcome, None
+        if outcome:
+            state, message = outcome
+            if state == "finished":
+                QMessageBox.information(self, "Đã ghép tệp", f"Tệp kết quả được lưu tại:\n{message}")
+                self.accept()
+            elif state == "failed":
+                QMessageBox.critical(self, "Không thể ghép tệp", message)
+            else:
+                QMessageBox.information(self, "Đã hủy ghép", "Đã hủy ghép tệp và dọn tệp tạm của tác vụ.")

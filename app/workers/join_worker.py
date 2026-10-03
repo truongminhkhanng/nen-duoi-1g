@@ -12,7 +12,7 @@ class JoinWorker(QObject):
     finished = Signal(str)
     failed = Signal(str)
     cancelled = Signal()
-    progress = Signal(int, int)
+    progress = Signal("qlonglong", "qlonglong")
 
     def __init__(self, manifest: Path, output: Path) -> None:
         super().__init__()
@@ -28,7 +28,7 @@ class JoinWorker(QObject):
             self.finished.emit(str(result))
         except InterruptedError:
             self.cancelled.emit()
-        except (OSError, ValueError, KeyError) as error:
+        except Exception as error:
             self.failed.emit(str(error))
 
     def cancel(self) -> None:

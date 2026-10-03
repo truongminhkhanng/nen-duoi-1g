@@ -6,3 +6,8 @@ __pycache__/
 build/
 dist/
 *.spec
+
+# Rebuildable project-local agent code intelligence (keep ignore policy/source).
+.agent/codegraph.sqlite*
+.agent/codegraph-state.json
+.agent/codegraph-*.sqlite*

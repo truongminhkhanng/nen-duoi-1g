@@ -7,7 +7,7 @@ from app.utils.sizes import format_size
 
 
 class FileTableModel(QAbstractTableModel):
-    HEADERS = ("Tên file", "Đường dẫn tương đối", "Dung lượng", "Trạng thái")
+    HEADERS = ("Tên tệp", "Đường dẫn tương đối", "Dung lượng", "Trạng thái")
 
     def __init__(self) -> None:
         super().__init__()

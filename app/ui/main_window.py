@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
         brand = QLabel("ZIP\nPART MAKER")
         brand.setObjectName("brand")
         sidebar_layout.addWidget(brand)
-        tagline = QLabel("Chia thư mục lớn\nThành ZIP độc lập")
+        tagline = QLabel("Đóng gói thư mục\nthành các ZIP độc lập")
         tagline.setObjectName("tagline")
         sidebar_layout.addWidget(tagline)
         sidebar_layout.addSpacing(28)
@@ -70,19 +70,19 @@ class MainWindow(QMainWindow):
         sidebar_layout.addWidget(nav_title)
         for text, active in (("01   Chọn thư mục", True),
                              ("02   Thiết lập ZIP", False),
-                             ("03   Quét và đóng gói", False)):
+                             ("03   Quét và nén", False)):
             item = QLabel(text)
             item.setObjectName("navActive" if active else "navItem")
             sidebar_layout.addWidget(item)
         sidebar_layout.addStretch()
         open_button = QPushButton("Mở thư mục kết quả")
         open_button.setObjectName("sidebarButton")
-        join_button = QPushButton("Ghép file đã chia…")
-        join_button.setObjectName("sidebarButton")
+        self.join_button = QPushButton("Ghép tệp đã chia…")
+        self.join_button.setObjectName("sidebarButton")
         open_button.clicked.connect(self._open_output)
-        join_button.clicked.connect(lambda: JoinDialog(self).exec())
+        self.join_button.clicked.connect(lambda: JoinDialog(self).exec())
         sidebar_layout.addWidget(open_button)
-        sidebar_layout.addWidget(join_button)
+        sidebar_layout.addWidget(self.join_button)
         version_label = QLabel(f"Phiên bản {__version__}")
         version_label.setObjectName("versionLabel")
         sidebar_layout.addWidget(version_label)
@@ -97,15 +97,15 @@ class MainWindow(QMainWindow):
 
         header = QHBoxLayout()
         heading = QVBoxLayout()
-        title = QLabel("Dashboard")
+        title = QLabel("Đóng gói thư mục")
         title.setObjectName("pageTitle")
-        subtitle = QLabel("Chia thư mục nhiều file thành các ZIP độc lập theo đúng dung lượng")
+        subtitle = QLabel("Tạo các ZIP độc lập, mỗi ZIP nhỏ hơn giới hạn dung lượng đã chọn.")
         subtitle.setObjectName("pageSubtitle")
         heading.addWidget(title)
         heading.addWidget(subtitle)
         header.addLayout(heading)
         header.addStretch()
-        self.scan_button = QPushButton("Quét file")
+        self.scan_button = QPushButton("Quét thư mục")
         self.scan_button.setObjectName("secondary")
         self.start_button = QPushButton("Bắt đầu nén")
         self.start_button.setObjectName("primary")
@@ -116,24 +116,26 @@ class MainWindow(QMainWindow):
         header.addWidget(self.start_button)
         content_layout.addLayout(header)
 
-        location = QGroupBox("Nguồn và kết quả")
+        location = self.location_group = QGroupBox("Thư mục nguồn và kết quả")
         location_grid = QGridLayout(location)
         location_grid.setContentsMargins(18, 22, 18, 16)
         self.source_edit = QLineEdit()
         self.output_edit = QLineEdit()
+        self.source_edit.setPlaceholderText("Chọn hoặc kéo thả thư mục cần nén")
+        self.output_edit.setPlaceholderText("Chọn thư mục lưu các ZIP")
         source_pick = QPushButton("Chọn thư mục")
-        output_pick = QPushButton("Chọn đầu ra")
+        output_pick = QPushButton("Chọn nơi lưu")
         source_pick.clicked.connect(self._choose_source)
         output_pick.clicked.connect(self._choose_output)
         location_grid.addWidget(QLabel("Thư mục nguồn"), 0, 0)
         location_grid.addWidget(self.source_edit, 0, 1)
         location_grid.addWidget(source_pick, 0, 2)
-        location_grid.addWidget(QLabel("Thư mục đầu ra"), 1, 0)
+        location_grid.addWidget(QLabel("Thư mục lưu kết quả"), 1, 0)
         location_grid.addWidget(self.output_edit, 1, 1)
         location_grid.addWidget(output_pick, 1, 2)
         content_layout.addWidget(location)
 
-        options = QGroupBox("Thiết lập đóng gói")
+        options = self.options_group = QGroupBox("Thiết lập nén")
         option_grid = QGridLayout(options)
         option_grid.setContentsMargins(18, 22, 18, 16)
         self.limit_spin = QDoubleSpinBox()
@@ -149,23 +151,26 @@ class MainWindow(QMainWindow):
         self.engine_combo.addItem("Tự động (khuyên dùng)", CompressionEngine.AUTO)
         self.engine_combo.addItem("WinRAR (Windows)", CompressionEngine.WINRAR)
         self.engine_combo.addItem("7-Zip", CompressionEngine.SEVEN_ZIP)
-        self.engine_combo.addItem("Python tích hợp", CompressionEngine.PYTHON)
-        self.engine_combo.setToolTip("Tự động ưu tiên 7-Zip; WinRAR chỉ tạo ZIP trên Windows")
+        self.engine_combo.addItem("Công cụ tích hợp", CompressionEngine.PYTHON)
+        self.engine_combo.setToolTip("Tự động ưu tiên 7-Zip khi có sẵn; macOS dùng công cụ tích hợp. WinRAR chỉ hỗ trợ Windows.")
         self.engine_status = QLabel()
+        self.engine_status.setWordWrap(True)
         self.engine_status.setObjectName("engineStatus")
         self.prefix_edit = QLineEdit("part")
-        option_grid.addWidget(QLabel("Giới hạn"), 0, 0)
+        self.prefix_edit.setToolTip("Phần tên đứng trước số thứ tự của ZIP, ví dụ: part_001.zip.")
+        self.limit_spin.setToolTip("Mỗi ZIP phải nhỏ hơn giới hạn này. 1 MB = 1024² byte; 1 GB = 1024³ byte.")
+        option_grid.addWidget(QLabel("Giới hạn mỗi ZIP"), 0, 0)
         option_grid.addWidget(self.limit_spin, 0, 1)
         option_grid.addWidget(self.unit_combo, 0, 2)
         option_grid.addWidget(QLabel("Mức nén"), 0, 3)
         option_grid.addWidget(self.level_combo, 0, 4)
-        option_grid.addWidget(QLabel("Prefix"), 0, 5)
+        option_grid.addWidget(QLabel("Tiền tố tên ZIP"), 0, 5)
         option_grid.addWidget(self.prefix_edit, 0, 6)
         self.recursive_check = QCheckBox("Quét thư mục con")
         self.structure_check = QCheckBox("Giữ cấu trúc thư mục")
-        self.hidden_check = QCheckBox("Bỏ qua file ẩn")
-        self.system_check = QCheckBox("Bỏ qua file hệ thống")
-        self.open_check = QCheckBox("Mở thư mục kết quả khi xong")
+        self.hidden_check = QCheckBox("Bỏ qua tệp ẩn")
+        self.system_check = QCheckBox("Bỏ qua tệp hệ thống")
+        self.open_check = QCheckBox("Mở kết quả khi hoàn tất")
         for checkbox in (self.recursive_check, self.structure_check, self.hidden_check,
                          self.system_check, self.open_check):
             checkbox.setChecked(True)
@@ -187,10 +192,10 @@ class MainWindow(QMainWindow):
 
         stats = QHBoxLayout()
         stats.setSpacing(12)
-        self.total_files = QLabel("Tổng file\n0")
+        self.total_files = QLabel("Số tệp\n0")
         self.total_size = QLabel("Tổng dung lượng\n0 B")
         self.estimated = QLabel("ZIP dự kiến\n0")
-        self.current_file = QLabel("File: —")
+        self.current_file = QLabel("Tệp đang xử lý: —")
         self.current_zip = QLabel("ZIP: —")
         for label in (self.total_files, self.total_size, self.estimated):
             card = QFrame()
@@ -238,7 +243,7 @@ class MainWindow(QMainWindow):
 
         actions = QHBoxLayout()
         self.pause_button = QPushButton("Tạm dừng")
-        self.cancel_button = QPushButton("Hủy")
+        self.cancel_button = QPushButton("Hủy tác vụ")
         self.pause_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
         self.pause_button.clicked.connect(self._toggle_pause)
@@ -259,10 +264,32 @@ class MainWindow(QMainWindow):
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         self.log.setMaximumBlockCount(2000)
-        self.log.setPlaceholderText("Nhật ký hoạt động…")
+        self.log.setPlaceholderText("Thông tin quét, nén và lỗi sẽ hiển thị tại đây.")
         log_layout.addWidget(self.log)
         bottom.addWidget(log_card, 1)
         content_layout.addLayout(bottom, 1)
+        self.source_edit.textChanged.connect(self._invalidate_scan)
+        self.output_edit.textChanged.connect(self._invalidate_scan)
+        for checkbox in (self.recursive_check, self.hidden_check, self.system_check):
+            checkbox.toggled.connect(self._invalidate_scan)
+        self.limit_spin.valueChanged.connect(self._update_plan)
+        self.unit_combo.currentTextChanged.connect(self._update_plan)
+
+    def _invalidate_scan(self) -> None:
+        self.scan_result = ScanResult()
+        self.groups, self.oversized = [], []
+        self.file_model.set_files([])
+        self.total_files.setText("Số tệp\n0")
+        self.total_size.setText("Tổng dung lượng\n0 B")
+        self.estimated.setText("ZIP dự kiến\n0")
+        self.start_button.setEnabled(False)
+
+    def _update_plan(self) -> None:
+        limit = parse_size(self.limit_spin.value(), self.unit_combo.currentText())
+        self.groups, self.oversized = plan_archives(self.scan_result.files, limit)
+        detail = f"\n{len(self.oversized)} tệp cần xử lý riêng" if self.oversized else ""
+        self.estimated.setText(f"ZIP dự kiến\n{len(self.groups)}{detail}")
+        self.file_model.refresh_statuses()
 
     def _choose_source(self) -> None:
         path = QFileDialog.getExistingDirectory(self, "Chọn thư mục nguồn", self.source_edit.text())
@@ -274,25 +301,34 @@ class MainWindow(QMainWindow):
         self.output_edit.setText(str(path / "ZIP_PARTS"))
 
     def _choose_output(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, "Chọn thư mục đầu ra", self.output_edit.text())
+        path = QFileDialog.getExistingDirectory(self, "Chọn thư mục lưu kết quả", self.output_edit.text())
         if path:
             self.output_edit.setText(path)
 
     def _paths(self) -> tuple[Path, Path]:
-        source, output = Path(self.source_edit.text()), Path(self.output_edit.text())
+        if not self.source_edit.text().strip():
+            raise ValueError("Hãy chọn thư mục nguồn")
+        source, output = Path(self.source_edit.text()).resolve(), Path(self.output_edit.text()).resolve()
         if not source.is_dir():
             raise ValueError("Hãy chọn thư mục nguồn hợp lệ")
         if not self.output_edit.text().strip():
-            raise ValueError("Hãy chọn thư mục đầu ra")
+            raise ValueError("Hãy chọn thư mục lưu kết quả")
+        if source == output:
+            raise ValueError("Thư mục lưu kết quả phải khác thư mục nguồn")
+        if output.exists() and not output.is_dir():
+            raise ValueError("Đường dẫn lưu kết quả phải là một thư mục")
         return source, output
 
     def scan(self) -> None:
+        if self.thread is not None:
+            return
         try:
             source, output = self._paths()
             parse_size(self.limit_spin.value(), self.unit_combo.currentText())
-        except ValueError as error:
+        except (ValueError, OSError) as error:
             QMessageBox.warning(self, "Thiết lập chưa hợp lệ", str(error))
             return
+        self._invalidate_scan()
         self._set_busy(True, scanning=True)
         self.log.appendPlainText(f"Bắt đầu quét: {source}")
         worker = ScanWorker(source, output, self.recursive_check.isChecked(),
@@ -308,9 +344,9 @@ class MainWindow(QMainWindow):
         worker.failed.connect(self._failed)
         worker.failed.connect(thread.quit)
         worker.log.connect(self.log.appendPlainText)
+        worker.cancelled.connect(self._cancelled)
+        worker.cancelled.connect(thread.quit)
         if isinstance(worker, CompressWorker):
-            worker.cancelled.connect(self._cancelled)
-            worker.cancelled.connect(thread.quit)
             worker.progress.connect(self._progress)
         thread.finished.connect(worker.deleteLater)
         thread.finished.connect(thread.deleteLater)
@@ -320,14 +356,13 @@ class MainWindow(QMainWindow):
 
     def _scan_finished(self, result: object) -> None:
         self.scan_result = result  # type: ignore[assignment]
-        limit = parse_size(self.limit_spin.value(), self.unit_combo.currentText())
-        self.groups, self.oversized = plan_archives(self.scan_result.files, limit)
         self.file_model.set_files(self.scan_result.files)
-        self.total_files.setText(f"Tổng file\n{len(self.scan_result.files)}")
+        self._update_plan()
+        self.total_files.setText(f"Số tệp\n{len(self.scan_result.files)}")
         self.total_size.setText(f"Tổng dung lượng\n{format_size(self.scan_result.total_size)}")
-        self.estimated.setText(f"ZIP dự kiến\n{len(self.groups)} (+{len(self.oversized)} quá lớn)")
-        self.log.appendPlainText(f"Quét xong: {len(self.scan_result.files)} file, {len(self.scan_result.errors)} lỗi")
-        self.start_button.setEnabled(bool(self.scan_result.files))
+        self.log.appendPlainText(f"Đã quét {len(self.scan_result.files)} tệp. Số lỗi truy cập: {len(self.scan_result.errors)}.")
+        if not self.scan_result.files:
+            self.log.appendPlainText("Không tìm thấy tệp phù hợp. Hãy kiểm tra thư mục nguồn và tùy chọn quét.")
 
     def _compression_settings(self) -> tuple[int, int | None]:
         return [(ZIP_STORED, None), (ZIP_DEFLATED, 1), (ZIP_DEFLATED, 6),
@@ -343,17 +378,19 @@ class MainWindow(QMainWindow):
         info = self._engine_info()
         detail = f" — {info.fallback_reason}" if info.fallback_reason else ""
         marker = "●" if not info.fallback_reason else "▲"
-        self.engine_status.setText(f"{marker} Đang dùng: {info.label}{detail}")
+        self.engine_status.setText(f"{marker} Sẽ dùng: {info.label}{detail}")
         self.engine_status.setProperty("state", "fallback" if info.fallback_reason else "ready")
         self.engine_status.style().unpolish(self.engine_status)
         self.engine_status.style().polish(self.engine_status)
 
     def compress(self) -> None:
+        if self.thread is not None or not self.scan_result.files:
+            return
         try:
             source, output = self._paths()
             limit = parse_size(self.limit_spin.value(), self.unit_combo.currentText())
             prefix = validate_prefix(self.prefix_edit.text())
-        except ValueError as error:
+        except (ValueError, OSError) as error:
             QMessageBox.warning(self, "Thiết lập chưa hợp lệ", str(error))
             return
         self.groups, self.oversized = plan_archives(self.scan_result.files, limit)
@@ -363,7 +400,11 @@ class MainWindow(QMainWindow):
             if selected is None:
                 return
             oversize_action = selected
-        output.mkdir(parents=True, exist_ok=True)
+        try:
+            output.mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            QMessageBox.critical(self, "Không thể tạo thư mục kết quả", str(error))
+            return
         conflict = choose_conflict_action(self, output, prefix)
         if conflict is None:
             return
@@ -384,7 +425,7 @@ class MainWindow(QMainWindow):
     def _progress(self, done: int, total: int, filename: str, archive: str, current: int) -> None:
         self.total_progress.setValue(min(100, int(done * 100 / max(total, 1))))
         self.zip_progress.setValue(current)
-        self.current_file.setText(f"File: {filename or '—'}")
+        self.current_file.setText(f"Tệp đang xử lý: {filename or '—'}")
         self.current_zip.setText(f"ZIP: {archive or '—'}")
 
     def _compression_finished(self, report: object) -> None:
@@ -394,7 +435,14 @@ class MainWindow(QMainWindow):
         self._refresh_statuses()
         archives = len(data.get("archives", []))
         errors = len(data.get("errors", []))
-        QMessageBox.information(self, "Hoàn thành", f"Đã tạo {archives} ZIP. Lỗi: {errors}.\nĐã ghi zip_report.json.")
+        skipped = len(data.get("skipped_files", []))
+        split = len(data.get("split_files", []))
+        message = (f"Đã tạo {archives} ZIP. Đã chia: {split} tệp. Bỏ qua: {skipped} tệp. Số lỗi: {errors}.\n"
+                   "Chi tiết được lưu trong zip_report.json tại thư mục kết quả.")
+        if errors:
+            QMessageBox.warning(self, "Hoàn tất, có lỗi cần kiểm tra", message)
+        else:
+            QMessageBox.information(self, "Đã hoàn tất nén", message)
         if self.open_check.isChecked():
             self._open_output()
 
@@ -403,10 +451,11 @@ class MainWindow(QMainWindow):
 
     def _failed(self, message: str) -> None:
         self.log.appendPlainText(f"Lỗi: {message}")
-        QMessageBox.critical(self, "Có lỗi", message)
+        self._refresh_statuses()
+        QMessageBox.critical(self, "Không thể hoàn tất tác vụ", message)
 
     def _cancelled(self) -> None:
-        self.log.appendPlainText("Đã hủy. File tạm chưa hoàn chỉnh đã được xóa.")
+        self.log.appendPlainText("Đã hủy tác vụ và dọn các tệp tạm của tác vụ. Kết quả đã hoàn tất được giữ lại.")
         self._refresh_statuses()
 
     def _thread_done(self) -> None:
@@ -415,13 +464,27 @@ class MainWindow(QMainWindow):
         self._set_busy(False)
 
     def _set_busy(self, busy: bool, scanning: bool = False) -> None:
+        self.location_group.setEnabled(not busy)
+        self.options_group.setEnabled(not busy)
+        self.join_button.setEnabled(not busy)
+        self.setAcceptDrops(not busy)
         self.scan_button.setEnabled(not busy)
         self.start_button.setEnabled(not busy and bool(self.scan_result.files))
         can_pause = self.active_engine == CompressionEngine.PYTHON
         self.pause_button.setEnabled(busy and not scanning and can_pause)
         self.pause_button.setToolTip("" if can_pause else
-                                     "Engine ngoài không hỗ trợ tạm dừng an toàn")
+                                     "Tạm dừng chỉ hỗ trợ khi dùng công cụ tích hợp")
         self.cancel_button.setEnabled(busy)
+        if busy:
+            self.total_progress.setRange(0, 0 if scanning else 100)
+            self.total_progress.setValue(0)
+            self.zip_progress.setValue(0)
+            self.current_file.setText("Tệp đang xử lý: —")
+            self.current_zip.setText("ZIP: —")
+        else:
+            self.total_progress.setRange(0, 100)
+            self.paused = False
+            self.pause_button.setText("Tạm dừng")
 
     def _toggle_pause(self) -> None:
         if isinstance(self.worker, CompressWorker):
@@ -433,12 +496,13 @@ class MainWindow(QMainWindow):
         if isinstance(self.worker, (ScanWorker, CompressWorker)):
             self.worker.cancel()
             self.cancel_button.setEnabled(False)
-            self.log.appendPlainText("Đang hủy an toàn sau file hiện tại…")
+            self.pause_button.setEnabled(False)
+            self.log.appendPlainText("Đang hủy tác vụ, vui lòng chờ dọn tệp tạm…")
 
     def _open_output(self) -> None:
         path = Path(self.output_edit.text())
-        if not path.is_dir():
-            QMessageBox.warning(self, "Không tìm thấy", "Thư mục kết quả chưa tồn tại")
+        if not self.output_edit.text().strip() or not path.is_dir():
+            QMessageBox.warning(self, "Chưa có thư mục kết quả", "Hãy chọn thư mục lưu kết quả hoặc hoàn tất nén trước khi mở.")
             return
         try:
             open_folder(path)
@@ -450,7 +514,8 @@ class MainWindow(QMainWindow):
         self.output_edit.setText(self.settings.value("output", "", str))
         self.limit_spin.setValue(self.settings.value("limit", 950.0, float))
         self.unit_combo.setCurrentText(self.settings.value("unit", "MB", str))
-        self.level_combo.setCurrentIndex(self.settings.value("level", 2, int))
+        saved_level = self.settings.value("level", 2, int)
+        self.level_combo.setCurrentIndex(saved_level if 0 <= saved_level < self.level_combo.count() else 2)
         saved_engine = self.settings.value("engine", CompressionEngine.AUTO.value, str)
         try:
             engine_value = CompressionEngine(saved_engine)
@@ -477,11 +542,15 @@ class MainWindow(QMainWindow):
             self.settings.setValue(key, value)
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        if self.thread is not None:
+            return
         urls = event.mimeData().urls()
         if len(urls) == 1 and urls[0].isLocalFile() and Path(urls[0].toLocalFile()).is_dir():
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent) -> None:
+        if self.thread is not None:
+            return
         self._set_source(Path(event.mimeData().urls()[0].toLocalFile()))
         event.acceptProposedAction()
 
