@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
         with connect(self.root) as db:
             self.assertFalse(search(db, "leaf")["matches"])
         path = self.root / ".agent/codegraph.sqlite"
-        with sqlite3.connect(path) as db:
+        with contextlib.closing(sqlite3.connect(path)) as db, db:
             state = json.loads(db.execute("SELECT value FROM metadata").fetchone()[0])
             state["schema"] = -1
             state["parser_version"] = "old"

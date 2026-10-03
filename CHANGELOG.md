@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.7 - 2026-10-03
+
+- Bao gồm toàn bộ sửa lỗi và nội dung tiếng Việt của 0.0.6.
+- Bổ sung thư viện Qt cho runner Linux để chạy test giao diện và build bản phát hành.
+- Đóng kết nối SQLite trong fixture kiểm thử để Windows có thể dọn thư mục tạm.
+- Tag 0.0.6 được giữ nguyên; bản đó chưa tạo Release vì lỗi môi trường Linux và fixture Windows.
+
 ## 0.0.6 - 2026-10-03
 
 - Chuẩn hóa nội dung tiếng Việt trên màn hình chính, tùy chọn nén và hộp thoại ghép tệp.

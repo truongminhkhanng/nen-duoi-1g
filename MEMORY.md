@@ -6,11 +6,11 @@
 
 ## Current objective
 
-User đã yêu cầu rà/sửa dự án, sửa câu chữ trong app, đẩy GitHub và tạo bản phát hành. Code/copy/tests hoàn thành; đang chốt commit/push/tag v0.0.6 và theo dõi native CI/Release. Không báo release xong khi chưa có assets.
+User đã yêu cầu rà/sửa dự án, sửa câu chữ trong app, đẩy GitHub và tạo bản phát hành. Code/copy/tests hoàn thành; v0.0.6 đã push nhưng Release bị skip: Linux thiếu libEGL, Windows fixture giữ SQLite handle. Đã sửa CI/fixture, đang publish v0.0.7; giữ nguyên tag v0.0.6. Không báo release xong khi chưa có assets.
 
 ## Current project state
 
-Zip Part Maker 0.0.6, Python >=3.11/PySide6 desktop; core độc lập Qt, workers nối GUI. Manifest v1 giữ nguyên, report bổ sung split_files và giữ các field cũ. Remote origin: https://github.com/truongminhkhanng/nen-duoi-1g.git, main; latest release được kiểm tra trước phát hành: v0.0.5. Local/remote main lúc bắt đầu cùng c872f9b. User yêu cầu publish nên commit/push/tag nằm trong scope session này.
+Zip Part Maker 0.0.7, Python >=3.11/PySide6 desktop; core độc lập Qt, workers nối GUI. Manifest v1 giữ nguyên, report bổ sung split_files và giữ các field cũ. Remote origin: https://github.com/truongminhkhanng/nen-duoi-1g.git, main; latest release được kiểm tra trước phát hành: v0.0.5. Local/remote main lúc bắt đầu cùng c872f9b. User yêu cầu publish nên commit/push/tag nằm trong scope session này.
 
 Root AGENT/CLAUDE/CONFIG/SKILL canonical, AGENTS bootstrap và docs wrappers; migration chưa commit lúc review bắt đầu được giữ và sẽ đưa lên GitHub cùng công việc hiện tại. Codeintel stdlib AST/SQLite cache ignored/rebuildable; update full rebuild, source luôn thắng cache. Python môi trường này 3.12.3 qua python3, PySide6 có sẵn.
 
@@ -38,4 +38,4 @@ Manifest review candidate cũ đã xử lý và có regression. Chưa có lỗi 
 
 ## Next actions
 
-Commit source + context/tooling hiện có, push main và tag v0.0.6 sau final check; theo dõi build/release đủ EXE/DMG/Linux. Nếu CI lỗi, sửa rồi rerun, không dừng ở tag-only. Append release evidence và cập nhật working memory sau khi có kết quả.
+Push bản sửa CI/tooling lên main và tag v0.0.7; theo dõi build/release đủ EXE/DMG/Linux. Nếu CI lỗi, sửa rồi rerun, không dừng ở tag-only. Append release evidence và cập nhật working memory sau khi có kết quả.

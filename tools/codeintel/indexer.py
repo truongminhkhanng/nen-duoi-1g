@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 import ast
 from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import fnmatch
 import hashlib
 import json
@@ -451,7 +451,7 @@ def build(root: Path) -> dict:
     os.close(fd)
     temporary = Path(temporary_name)
     try:
-        with sqlite3.connect(temporary) as db:
+        with closing(sqlite3.connect(temporary)) as db, db:
             db.executescript("""
                 CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
                 CREATE TABLE files (path TEXT PRIMARY KEY, language TEXT, module TEXT,
@@ -473,7 +473,6 @@ def build(root: Path) -> dict:
                              f["hash"], f["size"], f["mtime_ns"]) for p, f in state["files"].items()])
             db.executemany("INSERT INTO symbols VALUES (:name, :qname, :kind, :path, :line_start, :line_end, :signature, :visibility)", symbols)
             db.executemany("INSERT INTO edges VALUES (:source, :target, :kind, :path, :line, :confidence, :target_file)", edges)
-        db.close()
         destination = directory / "codegraph.sqlite"
         if destination.is_symlink():
             raise ValueError("Index must not be a symlink")

@@ -7,7 +7,7 @@
 [![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Phiên bản hiện tại: **0.0.6**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+Phiên bản hiện tại: **0.0.7**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
 
 Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
 

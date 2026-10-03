@@ -8,7 +8,7 @@ Facts dựa source local lúc migration 2026-10-03; source hiện tại luôn th
 
 ## Product / Service
 
-Tên Zip Part Maker, package zip-part-maker; version local 0.0.6 (`app/version.py`, `pyproject.toml`). Desktop Windows/macOS/Linux, MIT (LICENSE). Remote GitHub `truongminhkhanng/nen-duoi-1g` đã xác minh bằng gh ngày 2026-10-03; lúc chuẩn bị release, bản mới nhất là v0.0.5. Trạng thái v0.0.6 phải kiểm tra GitHub hoặc working memory.
+Tên Zip Part Maker, package zip-part-maker; version local 0.0.7 (`app/version.py`, `pyproject.toml`). Desktop Windows/macOS/Linux, MIT (LICENSE). Remote GitHub `truongminhkhanng/nen-duoi-1g` đã xác minh bằng gh ngày 2026-10-03; lúc chuẩn bị release, bản mới nhất là v0.0.5. Trạng thái v0.0.6 phải kiểm tra GitHub hoặc working memory.
 
 ## Features
 
