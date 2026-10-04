@@ -2,11 +2,11 @@
 
 ## Last updated
 
-2026-10-04, Asia/Ho_Chi_Minh. README cho người dùng đã xong; user yêu cầu đẩy lên GitHub. Evidence: HISTORY/2026-10-04.md, interactions 003–004.
+2026-10-04, Asia/Ho_Chi_Minh. README cho người dùng đã lên GitHub main, commit 4d6c73b; remote đã xác minh lúc 20:35:42 +0700. Evidence: HISTORY/2026-10-04.md, interactions 003–004.
 
 ## Current objective
 
-Đồng bộ README và checkpoint lên GitHub theo yêu cầu mới. Đã kiểm tra remote main khớp local 1b17172, chuẩn bị commit/push. Release 0.0.7 đã hoàn tất ở interaction 002, không còn việc release phải tiếp tục.
+Đã đẩy README và checkpoint lên GitHub theo yêu cầu mới; remote main khớp local commit 4d6c73baf6f9c10ca512e33fde7035efcdb577be. Release 0.0.7 đã hoàn tất ở interaction 002, không còn việc release phải tiếp tục.
 
 ## Current project state
 
@@ -36,4 +36,4 @@ Không còn lỗi xác minh trong scope trước. Native CI không thay thao tá
 
 ## Next actions
 
-Commit/push bốn file docs đã review, rồi xác minh remote và ghi kết quả. Không tự phát hành thêm. Release: https://github.com/truongminhkhanng/nen-duoi-1g/releases/tag/v0.0.7.
+README đã đồng bộ; chờ yêu cầu mới. Không tự phát hành thêm. Release: https://github.com/truongminhkhanng/nen-duoi-1g/releases/tag/v0.0.7.
