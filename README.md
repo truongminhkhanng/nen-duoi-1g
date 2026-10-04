@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/app-icon.png" width="128" alt="Zip Part Maker icon">
+  <img src="assets/app-icon.png" width="128" alt="Biểu tượng Zip Part Maker">
 </p>
 
 # Zip Part Maker
@@ -7,140 +7,87 @@
 [![Build](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml/badge.svg)](https://github.com/truongminhkhanng/nen-duoi-1g/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Phiên bản hiện tại: **0.0.7**. Xem lịch sử thay đổi tại [CHANGELOG.md](CHANGELOG.md).
+**Đóng gói thư mục thành nhiều tệp ZIP nhỏ, dễ gửi và lưu trữ.**
 
-Ứng dụng desktop Python/PySide6 đóng gói một thư mục thành nhiều ZIP **độc lập**, mỗi ZIP nhỏ hơn giới hạn đã chọn (mặc định 950 MB). Ứng dụng dùng First Fit Decreasing, chừa 2% dung lượng an toàn, giữ file nguồn nguyên vẹn và hỗ trợ tên/đường dẫn Unicode.
+Chọn thư mục, đặt dung lượng tối đa cho mỗi ZIP và bắt đầu nén. Zip Part Maker tự sắp xếp các tệp vào từng ZIP để kết quả nhỏ hơn giới hạn bạn chọn. Mỗi ZIP có thể mở và giải nén riêng, thuận tiện khi gửi nhiều tài liệu, ảnh hoặc bàn giao dữ liệu theo từng đợt.
 
-## Tính năng chính
+Ứng dụng giữ nguyên các tệp trong thư mục nguồn và hỗ trợ tên tệp tiếng Việt.
 
-- Quét đệ quy ở background, không đi theo symlink và tự loại thư mục đầu ra.
-- Bỏ qua `.DS_Store`, `Thumbs.db`, `desktop.ini`, `__MACOSX`, file ẩn/hệ thống tùy chọn.
-- ZIP_STORED hoặc ZIP_DEFLATED mức nhanh/cân bằng/tối đa.
-- Cho phép chọn Tự động, WinRAR, 7-Zip hoặc Python; macOS giữ engine Python tích hợp.
-- Ghi `.zip.tmp`, kiểm tra `testzip()`, SHA-256 và dung lượng trước khi đổi tên.
-- Bỏ qua, nén thử riêng hoặc chia file quá lớn thành `.001`… kèm manifest/checksum; có công cụ ghép lại.
-- Xử lý xung đột bằng ghi đè, tên mới, hoặc xóa ZIP do ứng dụng đặt theo prefix sau khi xác nhận.
-- Tạm dừng/hủy an toàn giữa các file, báo cáo `zip_report.json`, kéo-thả thư mục và lưu thiết lập.
+Phiên bản **0.0.7** · [Xem thay đổi](CHANGELOG.md)
 
-## Tải ứng dụng
+## Tải và mở ứng dụng
 
-Tải bản mới nhất tại [GitHub Releases](https://github.com/truongminhkhanng/nen-duoi-1g/releases/latest):
+Tải bản phù hợp với máy của bạn tại **[trang tải Zip Part Maker](https://github.com/truongminhkhanng/nen-duoi-1g/releases/latest)**. Bạn không cần cài Python để sử dụng các bản này.
 
-| Hệ điều hành | File | Kiến trúc |
+| Máy của bạn | Tệp cần tải | Cách mở |
 |---|---|---|
-| Windows | `ZipPartMaker.exe` | x64 |
-| macOS | `ZipPartMaker.dmg` | Apple Silicon (ARM64) |
-| Linux | `ZipPartMaker` | x64 |
+| Windows 64-bit | `ZipPartMaker.exe` | Mở tệp `.exe`. |
+| macOS dùng chip Apple Silicon | `ZipPartMaker.dmg` | Mở tệp `.dmg`, kéo ứng dụng vào Applications rồi mở ứng dụng. |
+| Linux 64-bit | `ZipPartMaker` | Cấp quyền chạy cho tệp rồi mở ứng dụng. |
 
-Ứng dụng chưa được ký chứng thư thương mại, vì vậy Windows SmartScreen hoặc macOS Gatekeeper có thể
-hiển thị cảnh báo ở lần mở đầu tiên. Chỉ tải file từ trang Releases chính thức của repository này.
-
-## Trường hợp sử dụng
-
-- **Gửi cả thư mục qua Zalo:** đặt giới hạn khoảng `950 MB` để tạo nhiều ZIP độc lập dưới 1 GB,
-  sau đó gửi lần lượt từng file. Người nhận có thể mở riêng từng ZIP, không cần tải đủ tất cả phần.
-- **Gửi tài liệu qua email:** đặt giới hạn theo dung lượng tệp đính kèm của nhà cung cấp, chẳng hạn
-  `20 MB` hoặc `25 MB`.
-- **Tải lên cloud theo từng phần:** chia bộ ảnh, video, tài liệu hoặc source code thành các ZIP nhỏ
-  để tải lại riêng phần bị lỗi thay vì tải lại toàn bộ.
-- **Chép sang USB/FAT32:** đặt giới hạn dưới `4 GB` để tránh giới hạn kích thước một file của FAT32.
-- **Bàn giao dữ liệu theo đợt:** mỗi ZIP độc lập, có SHA-256 và báo cáo `zip_report.json`, phù hợp
-  khi cần kiểm tra file nào đã giao hoặc bị lỗi.
-- **Lưu trữ và sao lưu:** gom nhiều file nhỏ thành các gói có kích thước đều, dễ sao chép, đánh số
-  và lưu trên nhiều thiết bị.
-
-### App không dùng để làm gì?
-
-Nếu chỉ có một file đơn như video `2.5 GB`, ứng dụng không thể bảo đảm biến nó thành một ZIP độc lập
-dưới 1 GB nếu dữ liệu không nén đủ nhỏ. Chế độ chia `.001`, `.002` là phương án phụ để truyền file;
-người nhận phải tải đủ và ghép lại trước khi sử dụng. Mục tiêu chính của app là **phân phối nhiều file
-trong một thư mục vào nhiều ZIP độc lập**, không phải cắt video hoặc chia một file lớn.
-
-## Chạy từ source
-
-Yêu cầu Python 3.11+:
+Trên Linux, mở Terminal tại thư mục chứa tệp đã tải và chạy:
 
 ```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-python -m pip install -e .
-python main.py
+chmod +x ZipPartMaker
+./ZipPartMaker
 ```
 
-Để dùng engine 7-Zip, cài `7z.exe` trên Windows hoặc `7zz`/`7z` trên Linux và bảo đảm
-chương trình nằm trong `PATH`. Nếu không tìm thấy, ứng dụng tự dùng engine Python tích hợp.
-WinRAR chỉ được hỗ trợ trên Windows và cần cài `WinRAR.exe`; ứng dụng chỉ yêu cầu WinRAR tạo
-file ZIP, không tạo file RAR.
+Ứng dụng chưa có chứng thư ký thương mại, nên Windows hoặc macOS có thể hiển thị cảnh báo khi mở lần đầu. Hãy tải từ trang chính thức được liên kết ở trên.
 
-Chạy test:
+## Tạo các tệp ZIP
 
-```bash
-python -m pip install -e ".[dev]"
-python -m pytest
-```
+1. **Chọn thư mục cần nén.** Bạn cũng có thể kéo thả thư mục vào ứng dụng.
+2. **Chọn nơi lưu kết quả.** Mặc định, ứng dụng tạo thư mục `ZIP_PARTS` bên trong thư mục nguồn.
+3. **Đặt giới hạn dung lượng cho mỗi ZIP.** Mặc định là **950 MB**. Nếu nơi nhận có giới hạn dung lượng, hãy chọn mức thấp hơn giới hạn đó.
+4. **Chọn mức nén.** Dùng **Cân bằng** để bắt đầu; chọn **Nhanh** nếu ưu tiên thời gian hoặc **Tối đa** nếu muốn thử giảm dung lượng hơn nữa.
+5. Bấm **Quét thư mục** để xem danh sách tệp, số ZIP dự kiến và các tệp vượt giới hạn.
+6. Bấm **Bắt đầu nén**. Nếu có tệp quá lớn hoặc ZIP trùng tên, ứng dụng sẽ hỏi cách xử lý.
+7. Khi hoàn tất, mở thư mục kết quả để lấy các ZIP. Tệp `zip_report.json` ghi lại kết quả, các tệp bị bỏ qua và lỗi nếu có.
 
-## Làm việc với AI và local code intelligence
+Bạn có thể đổi **Tiền tố tên ZIP** để dễ nhận biết từng đợt đóng gói, chọn quét thư mục con, giữ cấu trúc thư mục hoặc bỏ qua tệp ẩn và tệp hệ thống.
 
-Gọi `@AGENT.md [yêu cầu]` để agent tự đọc working memory, chọn context liên quan,
-query local index và xác minh source trước khi sửa. Quy trình và rule nằm trong
-[AGENT.md](AGENT.md); quyết định dài hạn ở [LONG_TERM_MEMORY.md](LONG_TERM_MEMORY.md),
-lịch sử truy theo [HISTORY/INDEX.md](HISTORY/INDEX.md). Các đường dẫn `docs/CLAUDE.md`,
-`docs/CONFIG.md`, `docs/SKILL.md` vẫn tồn tại và dẫn về context canonical ở root.
+### Gửi và mở kết quả
 
-Index chỉ dùng Python 3.11+ standard library, không cần cài thêm:
+Gửi lần lượt các ZIP trong thư mục kết quả. Người nhận có thể giải nén từng ZIP bằng công cụ mở ZIP trên máy của họ; không cần tải đủ tất cả ZIP để mở một ZIP riêng lẻ.
 
-```bash
-python3 -m tools.codeintel status
-python3 -m tools.codeintel update
-python3 -m tools.codeintel explore 'MainWindow compress'
-python3 -m unittest tools.codeintel.test_indexer -v
-```
+## Khi có tệp vượt giới hạn
 
-Dùng `python` thay `python3` nếu đó là executable của virtualenv/Windows hiện tại.
-Cache `.agent/codegraph.sqlite` và state JSON được ignore, có thể rebuild;
-tool source/ignore policy được giữ trong repo. Xem [tools/codeintel/README.md](tools/codeintel/README.md)
-để biết các lệnh search/callers/callees/impact và giới hạn heuristic. Index không thay source thật.
+Một tệp lớn có thể vẫn vượt giới hạn sau khi nén. Khi gặp trường hợp này, bạn có ba lựa chọn:
 
-## Build riêng từng nền tảng
+| Lựa chọn | Kết quả |
+|---|---|
+| **Bỏ qua** | Tiếp tục đóng gói các tệp còn lại. |
+| **Nén thử riêng** | Thử tạo một ZIP riêng cho tệp đó; chỉ giữ ZIP nếu nhỏ hơn giới hạn. |
+| **Chia tệp để ghép lại** | Tạo các phần `.001`, `.002`… cùng tệp `.manifest.json` để ghép lại sau. |
 
-PyInstaller không cross-compile. Hãy chạy script trên đúng hệ điều hành đích:
+**Nếu chọn chia tệp, hãy gửi đầy đủ các phần và tệp `.manifest.json`.** Người nhận cần ghép lại trước khi sử dụng tệp gốc. Cách này hữu ích khi truyền một tệp lớn, chẳng hạn video, nhưng không làm mỗi phần trở thành một tệp có thể mở riêng.
 
-- Windows PowerShell: `./scripts/build_windows.ps1` → `dist/ZipPartMaker.exe`
-- macOS: `./scripts/build_macos.sh` → `dist/Zip Part Maker.app` và `dist/ZipPartMaker.dmg`
-- Linux: `./scripts/build_linux.sh` → `dist/ZipPartMaker`
+### Ghép lại tệp đã chia
 
-Trên Ubuntu tối giản, Qt có thể cần các runtime XCB/GL của hệ thống. Cài trước bằng `sudo apt install libgl1 libegl1 libxkbcommon0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0` (desktop Ubuntu thông thường thường đã có phần lớn các gói này).
+1. Đặt tệp `.manifest.json` và đầy đủ các phần `.001`, `.002`… trong cùng một thư mục.
+2. Mở Zip Part Maker, chọn **Ghép tệp đã chia…**.
+3. Bấm **Chọn danh sách ghép…** và chọn tệp `.manifest.json`.
+4. Chọn thư mục lưu kết quả, rồi bấm **Ghép tệp**.
 
-GitHub Actions chạy ba runner riêng và tải artifact tương ứng. Với AppImage, build binary Linux trước, tạo AppDir có `AppRun`, desktop file và icon, rồi chạy `appimagetool AppDir ZipPartMaker.AppImage`; nên thực hiện trên bản Linux cũ nhất cần hỗ trợ để tăng tương thích glibc.
+Ứng dụng kiểm tra các phần trước khi hoàn tất. Nếu tên tệp kết quả đã tồn tại, ứng dụng tạo tên mới để giữ nguyên tệp cũ.
 
-## Cách dùng
+## Chọn công cụ nén
 
-1. Chọn hoặc kéo-thả thư mục nguồn; đầu ra mặc định là `ZIP_PARTS` bên trong nguồn.
-2. Chọn giới hạn, mức nén, tiền tố tên ZIP và tùy chọn quét; bấm **Quét thư mục**.
-3. Xem số ZIP dự kiến và trạng thái file quá lớn; bấm **Bắt đầu nén**.
-4. Nếu có file quá lớn hoặc ZIP cũ, chọn chính sách trong hộp thoại.
-5. Kiểm tra ZIP và `zip_report.json` trong thư mục đầu ra.
+Bạn có thể giữ tùy chọn **Tự động (khuyên dùng)** để bắt đầu. Ứng dụng có sẵn công cụ nén tích hợp và có thể dùng 7-Zip khi đã được cài trên Windows hoặc Linux. WinRAR được hỗ trợ trên Windows để tạo ZIP. Trên macOS, ứng dụng dùng công cụ tích hợp.
 
-Để ghép tệp đã chia, chọn **Ghép tệp đã chia…**, mở danh sách `.manifest.json`
-và chọn thư mục lưu kết quả. Giữ danh sách ghép và đầy đủ các phần `.001`, `.002`…
-trong cùng thư mục. Nếu tên tệp kết quả đã tồn tại, ứng dụng tạo tên mới.
+Bạn không cần cài thêm công cụ nén để sử dụng ứng dụng.
 
-## Giới hạn đã biết
+## Những điều cần biết
 
-- Dung lượng ZIP chỉ biết chính xác sau khi nén. Nếu một nhóm nhiều file vẫn vượt giới hạn sau biên an toàn 2%, ứng dụng xóa file tạm và tự chia đôi nhóm để thử lại; nếu chỉ còn một file thì ghi lỗi rõ ràng.
-- Tạm dừng/hủy có hiệu lực sau khi `zipfile` ghi xong file hiện tại; Python `zipfile` không cung cấp ngắt an toàn giữa một file.
-- Công cụ ghép chạy trong nền, hiển thị tiến trình và cho phép hủy an toàn khi xử lý file lớn.
-- Dark mode riêng chưa ép buộc; widget vẫn kế thừa palette hệ điều hành, stylesheet sáng bảo đảm giao diện nhất quán.
+- **Dung lượng sau khi nén tùy thuộc nội dung tệp.** Số ZIP sau khi quét là dự kiến; ứng dụng kiểm tra dung lượng thực tế và có thể chia lại nhóm tệp khi cần.
+- **Tệp gốc được giữ nguyên.** Ứng dụng không sửa, di chuyển hay xóa tệp trong thư mục nguồn. Thư mục lưu kết quả phải khác thư mục nguồn; có thể dùng thư mục con `ZIP_PARTS` mặc định.
+- **ZIP trùng tên có nhiều cách xử lý.** Chọn **Tạo tên mới** nếu muốn giữ các ZIP đã có. Nếu chọn **Ghi đè**, ZIP cũ chỉ được thay thế sau khi ZIP mới đã nén và kiểm tra thành công. Tùy chọn dọn ZIP cũ luôn yêu cầu xác nhận.
+- **Tạm dừng hoặc hủy có thể cần chờ.** Khi dùng công cụ nén tích hợp, thao tác có hiệu lực sau khi xử lý xong tệp đang nén. Các tệp tạm của tác vụ được dọn khi hủy hoặc gặp lỗi.
 
-## An toàn dữ liệu
+## Góp ý và báo lỗi
 
-Ứng dụng không sửa, di chuyển hoặc xóa file nguồn. Thư mục kết quả phải khác thư mục nguồn.
-Khi hủy/lỗi, chỉ các tệp tạm do tác vụ tạo bị xóa. ZIP cũ được giữ đến khi ZIP thay thế
-đã nén và kiểm tra thành công. Công cụ ghép kiểm tra tên, dung lượng và SHA-256 của các phần.
-Chế độ dọn ZIP cũ chỉ khớp các tên `<prefix>_NNN*.zip` trong đúng thư mục đầu ra và luôn yêu cầu xác nhận.
+Nếu gặp lỗi, hãy [gửi báo lỗi tại đây](https://github.com/truongminhkhanng/nen-duoi-1g/issues), kèm hệ điều hành, phiên bản ứng dụng và các bước để gặp lại lỗi. Bạn có thể đính kèm thông báo lỗi hoặc phần liên quan trong `zip_report.json`; hãy bỏ thông tin riêng tư trước khi gửi.
 
-## Đóng góp và giấy phép
+Nếu muốn đóng góp mã nguồn, xem [hướng dẫn đóng góp](CONTRIBUTING.md). Các vấn đề bảo mật được tiếp nhận theo [hướng dẫn bảo mật](SECURITY.md).
 
-Đọc [CONTRIBUTING.md](CONTRIBUTING.md) trước khi gửi pull request và báo cáo vấn đề bảo mật theo
-[SECURITY.md](SECURITY.md). Dự án được phát hành theo giấy phép [MIT](LICENSE).
+Zip Part Maker được phát hành theo giấy phép [MIT](LICENSE).

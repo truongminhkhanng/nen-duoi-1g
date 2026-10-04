@@ -5,4 +5,4 @@ Chỉ dùng khi cần truy lịch sử; không load toàn daily history mặc đ
 | Date | Topics | Important decisions | Files |
 |---|---|---|---|
 | 2026-10-03 | Migration context/memory/history; Python AST + SQLite local index; internal brief vs product copy | Giữ architecture/source; selective loading; cache ignored, update full rebuild; legacy zipfile-only Deprecated; không copy brief thành UI | [2026-10-03.md](2026-10-03.md) — interactions 001–003; review app/copy, chuẩn bị release 0.0.6 |
-| 2026-10-04 | User pause/resume; hoàn tất release 0.0.7 | Main/tag CI success; public release đủ EXE/DMG/Linux; checkpoint docs không cần build lại | [2026-10-04.md](2026-10-04.md) — interactions 001–002 |
+| 2026-10-04 | User pause/resume; hoàn tất release 0.0.7; README cho người dùng và đồng bộ GitHub | Main/tag CI success; public release đủ EXE/DMG/Linux; bản đóng gói không cần cài Python; user yêu cầu push README lên main | [2026-10-04.md](2026-10-04.md) — interactions 001–004 |
